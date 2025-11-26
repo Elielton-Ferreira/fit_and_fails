@@ -11,11 +11,13 @@ const WaterWidget = () => {
   const [logAmount, setLogAmount] = useState(250)
   const [goal, setGoal] = useState(2000)
   const [feedback, setFeedback] = useState('')
+  const [history, setHistory] = useState<WaterSnapshot['logs']>([])
 
   const fetchSnapshot = useCallback(async () => {
     const { data } = await api.get('/water')
     setSnapshot(data)
     setGoal(data.goalMl)
+    setHistory(data.logs)
   }, [])
 
   useEffect(() => {
@@ -26,6 +28,7 @@ const WaterWidget = () => {
     if (!logAmount) return
     const { data } = await api.post('/water', { amountMl: logAmount })
     setSnapshot(data)
+    setHistory(data.logs)
     setFeedback('Log registrado! 💧')
     setTimeout(() => setFeedback(''), 2000)
   }
@@ -110,6 +113,26 @@ const WaterWidget = () => {
       </div>
 
       {feedback && <p className="mt-4 text-sm text-emerald-300">{feedback}</p>}
+
+      <div className="mt-6 rounded-2xl border border-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Histórico de ingestão</p>
+        <div className="mt-3 max-h-60 space-y-2 overflow-y-auto">
+          {history.length === 0 && <p className="text-sm text-slate-500">Nenhum log hoje.</p>}
+          {history
+            .slice()
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((log) => {
+              const date = new Date(log.date)
+              const day = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+              return (
+                <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-200">
+                  <span>{day}</span>
+                  <span className="font-semibold text-white">{log.amountMl} ml</span>
+                </div>
+              )
+            })}
+        </div>
+      </div>
     </section>
   )
 }

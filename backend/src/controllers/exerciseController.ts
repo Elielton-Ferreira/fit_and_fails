@@ -23,8 +23,9 @@ export async function create(req: Request, res: Response) {
 export async function recent(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
-    const limit = req.query.limit ? Number(req.query.limit) : 5
-    const sessions = await exerciseService.listRecent(userId, limit)
+    const limit = req.query.limit ? Number(req.query.limit) : 20
+    const days = req.query.days ? Number(req.query.days) : undefined
+    const sessions = days ? await exerciseService.listSince(userId, days, limit) : await exerciseService.listRecent(userId, limit)
     return res.json(sessions)
   } catch (err: any) {
     return res.status(400).json({ error: err.message })

@@ -22,4 +22,12 @@ const findRecentByUser = (userId: string, limit = 10) => {
   })
 }
 
-export default { create, findRecentByUser }
+const findByUserSince = (userId: string, from: Date, limit = 100) => {
+  return prisma.exerciseSession.findMany({
+    where: { userId, startTime: { gte: from } },
+    orderBy: { startTime: 'desc' },
+    take: limit
+  })
+}
+
+export default { create, findRecentByUser, findByUserSince }

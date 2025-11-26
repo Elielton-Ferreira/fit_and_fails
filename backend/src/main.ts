@@ -26,7 +26,7 @@ app.use(
     credentials: true
   })
 )
-app.use(json({ limit: '5mb' }))
+app.use(json({ limit: '10mb' }))
 
 const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))

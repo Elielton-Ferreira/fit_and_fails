@@ -47,6 +47,17 @@ const findByUserAndTypeBetween = async (userId: string, type: PostType, start: D
   })
 }
 
+const findByUserTypeAndBadgeBetween = async (userId: string, type: PostType, badgeType: string, start: Date, end: Date) => {
+  return prisma.post.findFirst({
+    where: {
+      userId,
+      type,
+      badgeType,
+      createdAt: { gte: start, lt: end }
+    }
+  })
+}
+
 const remove = async (id: string) => {
   return prisma.$transaction([
     prisma.comment.deleteMany({ where: { postId: id } }),
@@ -55,4 +66,4 @@ const remove = async (id: string) => {
   ])
 }
 
-export default { findAll, create, findById, findByUserAndTypeBetween, remove }
+export default { findAll, create, findById, findByUserAndTypeBetween, findByUserTypeAndBadgeBetween, remove }

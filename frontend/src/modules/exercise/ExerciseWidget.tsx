@@ -11,6 +11,7 @@ const ExerciseWidget = () => {
   const [mediaUrl, setMediaUrl] = useState('')
   const [share, setShare] = useState(true)
   const [sessions, setSessions] = useState<ExerciseSession[]>([])
+  const [history, setHistory] = useState<ExerciseSession[]>([])
   const [customType, setCustomType] = useState('')
   const [types, setTypes] = useState<string[]>(['Caminhada', 'Bike', 'Musculação', 'Luta', 'Alongamento', 'Ar Livre'])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -19,11 +20,18 @@ const ExerciseWidget = () => {
   const durationPresets = [15, 30, 45, 60]
 
   const fetchSessions = useCallback(async () => {
-    const { data } = await api.get('/exercises?limit=4')
-    setSessions(data)
+    const { data } = await api.get('/exercises', { params: { limit: 6, days: 60 } })
+    setSessions(data.slice(0, 4))
+    setHistory(data)
+    const typesFromHistory = Array.from(new Set(data.map((s) => s.type)))
+    setTypes((prev) => Array.from(new Set([...prev, ...typesFromHistory, loadCustomTypes()].flat())))
   }, [])
 
   useEffect(() => {
+    const saved = loadCustomTypes()
+    if (saved.length) {
+      setTypes((prev) => Array.from(new Set([...prev, ...saved])))
+    }
     fetchSessions()
   }, [fetchSessions])
 
@@ -66,11 +74,51 @@ const ExerciseWidget = () => {
     if (!customType.trim()) return
     const next = customType.trim()
     if (!types.includes(next)) {
-      setTypes((prev) => [...prev, next])
+      setTypes((prev) => {
+        const updated = [...prev, next]
+        persistCustomTypes(updated)
+        return updated
+      })
+    } else {
+      persistCustomTypes(types)
     }
     setType(next)
     setCustomType('')
   }
+
+  const loadCustomTypes = (): string[] => {
+    try {
+      const raw = localStorage.getItem('fit-fails-custom-types')
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  const persistCustomTypes = (list: string[]) => {
+    try {
+      const defaults = ['Caminhada', 'Bike', 'Musculação', 'Luta', 'Alongamento', 'Ar Livre']
+      const customOnly = list.filter((item) => !defaults.includes(item))
+      localStorage.setItem('fit-fails-custom-types', JSON.stringify(customOnly))
+    } catch {
+      // ignore
+    }
+  }
+
+  const calendarDays = Array.from({ length: 21 }).map((_, idx) => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - idx)
+    return d
+  }).reverse()
+
+  const historyByDay = history.reduce<Record<string, ExerciseSession[]>>((acc, session) => {
+    const key = new Date(session.startTime).toISOString().substring(0, 10)
+    acc[key] = acc[key] ? [...acc[key], session] : [session]
+    return acc
+  }, {})
 
   return (
     <section id="exercise" className="glass-panel rounded-3xl p-6">
@@ -88,7 +136,7 @@ const ExerciseWidget = () => {
             <select
               value={type}
               onChange={(event) => setType(event.target.value)}
-              className="w-full rounded-2xl border border-white/15 bg-white/10 px-3 py-3 text-sm text-white focus:border-primary focus:outline-none"
+              className="w-full rounded-2xl border border-white/15 bg-white/10 px-3 py-3 text-sm text-white focus:border-primary focus:outline-none dark-select"
             >
               {types.map((option) => (
                 <option key={option} value={option}>
@@ -96,14 +144,14 @@ const ExerciseWidget = () => {
                 </option>
               ))}
             </select>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
               <input
                 value={customType}
                 onChange={(event) => setCustomType(event.target.value)}
                 placeholder="Novo tipo (ex.: Yoga, Cross, Corrida)"
                 className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
               />
-              <Button type="button" variant="secondary" className="px-3 py-2 text-xs whitespace-nowrap" onClick={addCustomType}>
+              <Button type="button" variant="secondary" className="w-full px-3 py-2 text-xs whitespace-nowrap" onClick={addCustomType}>
                 + Tipo
               </Button>
             </div>
@@ -140,10 +188,13 @@ const ExerciseWidget = () => {
               <Button
                 type="button"
                 variant="secondary"
-                className="px-4 py-2 text-sm"
+                className="flex items-center gap-2 px-4 py-2 text-sm"
                 onClick={() => fileInputRef.current?.click()}
               >
-                Abrir câmera / enviar arquivo
+                <span role="img" aria-label="camera">
+                  📷
+                </span>
+                Enviar foto/vídeo
               </Button>
               {mediaLabel && <span className="text-xs text-emerald-200">{mediaLabel}</span>}
             </div>
@@ -176,15 +227,45 @@ const ExerciseWidget = () => {
         </div>
       </form>
 
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Calendário (últimos 21 dias)</p>
+        <div className="mt-3 grid grid-cols-7 gap-2">
+          {calendarDays.map((day) => {
+            const key = day.toISOString().substring(0, 10)
+            const hasWorkout = Boolean(historyByDay[key])
+            const count = historyByDay[key]?.length ?? 0
+            return (
+              <div
+                key={key}
+                className={[
+                  'flex h-10 flex-col items-center justify-center rounded-lg border text-xs transition',
+                  hasWorkout
+                    ? 'border-emerald-400/50 bg-emerald-400/20 text-emerald-100'
+                    : 'border-white/10 bg-white/5 text-slate-400'
+                ].join(' ')}
+                title={hasWorkout ? `${count} treino(s)` : 'Sem treino'}
+              >
+                <span>{day.getDate()}</span>
+                <span className="text-[10px]">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'][day.getDay()]}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="mt-6 space-y-3">
-        {sessions.map((session) => (
-          <div key={session.id} className="flex items-center justify-between rounded-2xl border border-white/5 px-4 py-3 text-sm text-slate-200">
-            <span>
-              <strong className="text-white">{session.type}</strong> • {session.durationMinutes ?? 0} min
-            </span>
-            {session.notes && <span className="text-slate-500">{session.notes}</span>}
-          </div>
-        ))}
+        {history.map((session) => {
+          const dateStr = new Date(session.startTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          return (
+            <div key={session.id} className="flex items-center justify-between rounded-2xl border border-white/5 px-4 py-3 text-sm text-slate-200">
+              <span>
+                <strong className="text-white">{session.type}</strong> • {session.durationMinutes ?? 0} min
+                <span className="ml-2 text-xs text-slate-400">{dateStr}</span>
+              </span>
+              {session.notes && <span className="text-slate-500">{session.notes}</span>}
+            </div>
+          )
+        })}
         {!sessions.length && <p className="text-sm text-slate-500">Nenhum treino registrado ainda hoje.</p>}
       </div>
     </section>
