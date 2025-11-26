@@ -1,0 +1,38 @@
+{
+  "name": "fit-and-fails-backend",
+  "version": "0.1.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-validator": "^6.14.3",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "dotenv": "^16.4.5",
+    "prisma": "^5.11.0",
+    "@prisma/client": "^5.11.0",
+    "swagger-ui-express": "^4.6.3",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/helmet": "^4.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.2",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.5.1",
+    "@types/cors": "^2.8.17",
+    "@types/swagger-ui-express": "^4.1.7",
+    "@types/yamljs": "^0.2.34",
+    "@types/bcryptjs": "^2.4.2"
+  }
+}

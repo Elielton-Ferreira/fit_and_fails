@@ -1,0 +1,407 @@
+openapi: 3.0.3
+info:
+  title: Fit & Fails API
+  description: API oficial da plataforma Fit & Fails.
+  version: 0.2.0
+servers:
+  - url: http://localhost:4000
+    description: Desenvolvimento local
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthRequest:
+      type: object
+      required: [email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+    PostPayload:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [water, screen_time, exercise, shame, healthy_food]
+        text:
+          type: string
+        imageUrl:
+          type: string
+        videoUrl:
+          type: string
+        badgeType:
+          type: string
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        text:
+          type: string
+        imageUrl:
+          type: string
+        videoUrl:
+          type: string
+        badgeType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        likes:
+          type: object
+          properties:
+            total:
+              type: integer
+            likedByViewer:
+              type: boolean
+    WaterLog:
+      type: object
+      properties:
+        id:
+          type: string
+        amountMl:
+          type: integer
+        dailyGoalMl:
+          type: integer
+        date:
+          type: string
+          format: date-time
+    WaterSnapshot:
+      type: object
+      properties:
+        goalMl:
+          type: integer
+        totalMl:
+          type: integer
+        progress:
+          type: integer
+        pendingMl:
+          type: integer
+        canCelebrate:
+          type: boolean
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/WaterLog'
+    ScreenTimeLog:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        minutes:
+          type: integer
+    ScreenTimeSummary:
+      type: object
+      properties:
+        current:
+          type: object
+          properties:
+            totalMinutes: { type: integer }
+            averageMinutes: { type: integer }
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScreenTimeLog'
+        previous:
+          type: object
+          properties:
+            totalMinutes: { type: integer }
+            averageMinutes: { type: integer }
+        improvementMinutes:
+          type: integer
+        trend:
+          type: string
+          enum: [down, up, flat]
+    ExerciseSession:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        startTime: { type: string, format: date-time }
+        endTime: { type: string, format: date-time }
+        durationMinutes: { type: integer }
+        notes: { type: string }
+        mediaUrls:
+          type: array
+          items: { type: string }
+paths:
+  /api/auth/register:
+    post:
+      summary: Cadastro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '201':
+          description: Usuário cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/posts:
+    get:
+      summary: Feed
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+    post:
+      summary: Criar postagem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPayload'
+      responses:
+        '201':
+          description: Criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+  /api/posts/{postId}/like:
+    parameters:
+      - in: path
+        name: postId
+        required: true
+        schema: { type: string }
+    post:
+      summary: Curtir post
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+    delete:
+      summary: Remover like
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+  /api/water:
+    get:
+      summary: Status de hidratação do dia
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaterSnapshot'
+    post:
+      summary: Registrar ingestão
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amountMl]
+              properties:
+                amountMl: { type: integer }
+                dailyGoalMl: { type: integer }
+      responses:
+        '201':
+          description: Snapshot atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaterSnapshot'
+  /api/water/goal:
+    patch:
+      summary: Atualizar meta diária
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dailyGoalMl:
+                  type: integer
+      responses:
+        '200':
+          description: Snapshot atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaterSnapshot'
+  /api/screen-time/logs:
+    post:
+      summary: Registrar tempo de tela
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [minutes]
+              properties:
+                date:
+                  type: string
+                  format: date
+                minutes:
+                  type: integer
+      responses:
+        '201':
+          description: Log registrado
+  /api/screen-time/summary:
+    get:
+      summary: Resumo semanal
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Resumo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenTimeSummary'
+  /api/screen-time/share:
+    post:
+      summary: Compartilhar conquista
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Post criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+  /api/exercises:
+    get:
+      summary: Sessões recentes
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de sessões
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExerciseSession'
+    post:
+      summary: Registrar exercício
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, startTime, endTime]
+              properties:
+                type:
+                  type: string
+                startTime:
+                  type: string
+                  format: date-time
+                endTime:
+                  type: string
+                  format: date-time
+                notes:
+                  type: string
+                mediaUrls:
+                  type: array
+                  items: { type: string }
+                shareToFeed:
+                  type: boolean
+      responses:
+        '201':
+          description: Sessão registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseSession'

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fit-and-fails-backend
+  namespace: fit-and-fails
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fit-and-fails-backend
+  template:
+    metadata:
+      labels:
+        app: fit-and-fails-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/example/fit-and-fails-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: fit-and-fails-config
+                  key: PORT
+            - name: WATER_DEFAULT_GOAL
+              valueFrom:
+                configMapKeyRef:
+                  name: fit-and-fails-config
+                  key: WATER_DEFAULT_GOAL
+            - name: FRONTEND_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: fit-and-fails-config
+                  key: FRONTEND_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fit-and-fails-secrets
+                  key: JWT_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: fit-and-fails-secrets
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fit-and-fails-backend
+  namespace: fit-and-fails
+spec:
+  selector:
+    app: fit-and-fails-backend
+  ports:
+    - port: 4000
+      targetPort: 4000

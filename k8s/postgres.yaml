@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fit-and-fails-db
+  namespace: fit-and-fails
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fit-and-fails-postgres
+  namespace: fit-and-fails
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fit-and-fails-postgres
+  template:
+    metadata:
+      labels:
+        app: fit-and-fails-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: fitandfails
+            - name: POSTGRES_USER
+              value: fit-and-fails
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fit-and-fails-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: fit-and-fails-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fit-and-fails-postgres
+  namespace: fit-and-fails
+spec:
+  selector:
+    app: fit-and-fails-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
