@@ -21,7 +21,7 @@ const Sidebar = () => {
           Disciplina com <span className="text-primary">humor</span>
         </h2>
       </div>
-      <nav className="flex flex-1 flex-col gap-2">
+      <nav className="flex flex-col gap-2 mb-4">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
@@ -38,7 +38,7 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-      <div className="mt-10 rounded-2xl border border-white/10 p-4">
+      <div className="mt-6 rounded-2xl border border-white/10 p-4">
         <p className="text-sm text-slate-400">Logado como</p>
         <div className="mt-2 flex items-center gap-3 overflow-hidden">
           {user?.avatarUrl ? (

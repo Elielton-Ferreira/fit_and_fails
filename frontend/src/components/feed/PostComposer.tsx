@@ -4,12 +4,12 @@ import api from '../../lib/api'
 import Button from '../ui/Button'
 import { Post, PostType } from '../../types'
 
-const postTypes: { value: PostType; label: string }[] = [
-  { value: 'healthy_food', label: 'Boa refeição' },
-  { value: 'shame', label: 'Vergonha' },
-  { value: 'exercise', label: 'Exercício' },
-  { value: 'water', label: 'Hidratação' },
-  { value: 'screen_time', label: 'Tempo de tela' }
+const postTypes: { value: PostType; label: string; icon: string }[] = [
+  { value: 'healthy_food', label: 'Boa refeição', icon: '🥗' },
+  { value: 'exercise', label: 'Exercício', icon: '💪' },
+  { value: 'water', label: 'Hidratação', icon: '💧' },
+  { value: 'screen_time', label: 'Tempo de tela', icon: '⌛' },
+  { value: 'shame', label: 'Vergonha', icon: '🙈' }
 ]
 
 const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => void; onPublished?: () => void }) => {
@@ -63,26 +63,35 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
   return (
     <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="mb-3 text-sm font-semibold text-slate-700">Compartilhe um momento</p>
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <select
-          value={type}
-          onChange={(event) => setType(event.target.value as PostType)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
-        >
-          {postTypes.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {postTypes.map((option) => {
+            const active = type === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setType(option.value)}
+                className={[
+                  'flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition',
+                  active ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'
+                ].join(' ')}
+              >
+                <span>{option.icon}</span>
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+
         <div className="flex w-full flex-col gap-2">
           <Button
             type="button"
             variant="secondary"
-            className="w-full px-3 py-2 text-xs sm:w-auto"
+            className="w-full px-3 py-2 text-sm sm:w-auto"
             onClick={() => fileInputRef.current?.click()}
           >
-            Abrir câmera / upload
+            📷 Enviar foto/vídeo
           </Button>
           {mediaInfo && <p className="text-xs text-emerald-600">{mediaInfo}</p>}
           <input
