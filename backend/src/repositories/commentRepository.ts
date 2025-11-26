@@ -6,4 +6,8 @@ const create = async ({ postId, userId, text }: { postId: string; userId: string
   })
 }
 
-export default { create }
+const remove = async (id: string) => {
+  return prisma.comment.delete({ where: { id } })
+}
+
+export default { create, remove }

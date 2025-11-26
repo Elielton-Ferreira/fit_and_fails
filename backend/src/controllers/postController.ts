@@ -66,3 +66,15 @@ export async function remove(req: Request, res: Response) {
     return res.status(400).json({ error: err.message })
   }
 }
+
+export async function deleteComment(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const postId = req.params.postId
+    const commentId = req.params.commentId
+    const updated = await postService.deleteComment({ commentId, postId, userId })
+    return res.json(updated)
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message })
+  }
+}

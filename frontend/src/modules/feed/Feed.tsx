@@ -57,6 +57,15 @@ const Feed = () => {
     }
   }
 
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    try {
+      const { data } = await api.delete(`/posts/${postId}/comments/${commentId}`)
+      setPosts((prev) => prev.map((post) => (post.id === postId ? data : post)))
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   return (
     <section id="feed" className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -75,8 +84,10 @@ const Feed = () => {
               post={post}
               onToggleLike={handleToggleLike}
               onComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onDelete={handleDelete}
               isOwner={user?.id === post.user.id}
+              currentUserId={user?.id}
             />
           ))}
         </div>

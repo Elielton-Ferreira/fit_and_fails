@@ -10,5 +10,6 @@ router.post('/:postId/like', authMiddleware, (req: Request, res: Response) => po
 router.delete('/:postId/like', authMiddleware, (req: Request, res: Response) => postController.unlike(req, res))
 router.post('/:postId/comments', authMiddleware, (req: Request, res: Response) => postController.comment(req, res))
 router.delete('/:postId', authMiddleware, (req: Request, res: Response) => postController.remove(req, res))
+router.delete('/:postId/comments/:commentId', authMiddleware, (req: Request, res: Response) => postController.deleteComment(req, res))
 
 export default router

@@ -90,6 +90,16 @@ const addComment = async ({ postId, userId, text }: { postId: string; userId: st
   return getById(postId, userId)
 }
 
+const deleteComment = async ({ commentId, postId, userId }: { commentId: string; postId: string; userId: string }) => {
+  const post = (await postRepository.findById(postId)) as PostWithRelations | null
+  if (!post) throw new Error('Post não encontrado')
+  const comment = post.comments.find((c) => c.id === commentId)
+  if (!comment) throw new Error('Comentário não encontrado')
+  if (comment.user.id !== userId) throw new Error('Você não pode excluir este comentário')
+  await commentRepository.remove(commentId)
+  return getById(postId, userId)
+}
+
 const remove = async ({ postId, userId }: { postId: string; userId: string }) => {
   const post = (await postRepository.findById(postId)) as PostWithRelations | null
   if (!post) throw new Error('Post não encontrado')
@@ -113,4 +123,4 @@ const hasPostForDay = async (userId: string, type: PostType, day: Date) => {
   return Boolean(existing)
 }
 
-export default { getAll, create, likePost, unlikePost, getById, hasPostForDay, addComment, remove }
+export default { getAll, create, likePost, unlikePost, getById, hasPostForDay, addComment, deleteComment, remove }

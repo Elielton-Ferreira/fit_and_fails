@@ -22,27 +22,46 @@ const PostCard = ({
   onToggleLike,
   onComment,
   onDelete,
-  isOwner = false
+  onDeleteComment,
+  isOwner = false,
+  currentUserId
 }: {
   post: Post
   onToggleLike: (postId: string, liked: boolean) => void
   onComment: (postId: string, text: string) => Promise<void>
   onDelete: (postId: string) => Promise<void>
+  onDeleteComment: (postId: string, commentId: string) => Promise<void>
   isOwner?: boolean
+  currentUserId?: string
 }) => {
   const meta = typeLabels[post.type]
   const [comment, setComment] = useState('')
   const [commentError, setCommentError] = useState('')
+  const [sendingComment, setSendingComment] = useState(false)
   const visibleComments = post.comments.items.slice(0, 2)
+
+  const handleCommentKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      submitComment()
+    }
+  }
 
   const submitComment = async () => {
     if (!comment.trim()) {
       setCommentError('Escreva um comentário')
       return
     }
-    setCommentError('')
-    await onComment(post.id, comment.trim())
-    setComment('')
+    try {
+      setSendingComment(true)
+      setCommentError('')
+      await onComment(post.id, comment.trim())
+      setComment('')
+    } catch (err: any) {
+      setCommentError(err.message || 'Não foi possível comentar agora.')
+    } finally {
+      setSendingComment(false)
+    }
   }
 
   return (
@@ -107,10 +126,21 @@ const PostCard = ({
 
       <div className="px-4 py-3">
         {visibleComments.map((item) => (
-          <div key={item.id} className="mb-2">
-            <span className="text-sm font-semibold text-slate-900">{item.user.name}</span>{' '}
-            <span className="text-sm text-slate-700">{item.text}</span>
-            <span className="ml-2 text-xs text-slate-400">{dayjs(item.createdAt).fromNow()}</span>
+          <div key={item.id} className="mb-2 flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-slate-900">{item.user.name}</span>{' '}
+              <span className="text-sm text-slate-700">{item.text}</span>
+              <span className="ml-2 text-xs text-slate-400">{dayjs(item.createdAt).fromNow()}</span>
+            </div>
+            {currentUserId === item.user.id && (
+              <button
+                type="button"
+                onClick={() => onDeleteComment(post.id, item.id)}
+                className="text-xs font-semibold text-rose-500 hover:underline"
+              >
+                Excluir
+              </button>
+            )}
           </div>
         ))}
         {post.comments.total > visibleComments.length && (
@@ -121,15 +151,17 @@ const PostCard = ({
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             placeholder="Adicione um comentário..."
+            onKeyDown={handleCommentKey}
             className="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
           />
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             onClick={submitComment}
-            className="border-none bg-transparent px-3 py-1 text-sm font-semibold text-blue-600 hover:opacity-70"
+            disabled={sendingComment}
+            className="whitespace-nowrap rounded-full border border-blue-500 bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 disabled:opacity-60"
           >
-            Publicar
+            {sendingComment ? 'Enviando...' : 'Comentar'}
           </Button>
         </div>
         {commentError && <p className="mt-1 text-xs text-rose-500">{commentError}</p>}
