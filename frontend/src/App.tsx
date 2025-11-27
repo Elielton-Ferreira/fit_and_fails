@@ -40,13 +40,14 @@ const App = () => {
         }
       />
       <Route
-        path="/screen"
+        path="/book"
         element={
           <RequireAuth>
             <ScreenTimePage />
           </RequireAuth>
         }
       />
+      <Route path="/screen" element={<Navigate to="/book" replace />} />
       <Route
         path="/exercise"
         element={

@@ -6,9 +6,9 @@ const ScreenTimePage = () => {
     <AppLayout>
       <div className="space-y-6">
         <header className="glass-panel rounded-3xl p-6 text-white">
-          <p className="text-sm text-slate-400">Detox digital</p>
-          <h1 className="mt-2 text-3xl font-semibold">Controle seu tempo de tela</h1>
-          <p className="mt-1 text-sm text-slate-400">Registre minutos diários e compartilhe conquistas.</p>
+          <p className="text-sm text-slate-400">Leitura</p>
+          <h1 className="mt-2 text-3xl font-semibold">Acompanhe suas páginas lidas</h1>
+          <p className="mt-1 text-sm text-slate-400">Registre páginas por dia e compartilhe seu ritmo.</p>
         </header>
         <ScreenTimeWidget />
       </div>

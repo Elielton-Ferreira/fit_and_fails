@@ -24,11 +24,11 @@ const IconWater = () => (
   </svg>
 )
 
-const IconScreen = () => (
+const IconBook = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="5" width="18" height="12" rx="2" />
-    <path d="M12 17v2" />
-    <path d="M8 21h8" />
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20" />
+    <path d="M6.5 2A2.5 2.5 0 0 0 4 4.5v15a2.5 2.5 0 0 1 2.5 2.5H20V2Z" />
   </svg>
 )
 
@@ -52,7 +52,7 @@ const navItems = [
   { label: 'Feed', href: '/dashboard', icon: <IconFeed /> },
   { label: 'Criar', href: '/create', icon: <IconCreate /> },
   { label: 'Água', href: '/water', icon: <IconWater /> },
-  { label: 'Tempo de Tela', href: '/screen', icon: <IconScreen /> },
+  { label: 'Páginas', href: '/book', icon: <IconBook /> },
   { label: 'Exercícios', href: '/exercise', icon: <IconExercise /> },
   { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
