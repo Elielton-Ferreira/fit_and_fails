@@ -52,7 +52,7 @@ const navItems = [
   { label: 'Feed', href: '/dashboard', icon: <IconFeed /> },
   { label: 'Criar', href: '/create', icon: <IconCreate /> },
   { label: 'Água', href: '/water', icon: <IconWater /> },
-  { label: 'Páginas', href: '/book', icon: <IconBook /> },
+  { label: 'Livros', href: '/book', icon: <IconBook /> },
   { label: 'Exercícios', href: '/exercise', icon: <IconExercise /> },
   { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
