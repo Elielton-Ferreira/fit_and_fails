@@ -4,7 +4,7 @@ import postService from '../services/postService'
 export async function getAll(req: Request, res: Response) {
   try {
     const viewerId = (req as any).userId
-    const posts = await postService.getAll({ type: req.query.type as string, viewerId })
+    const posts = await postService.getAll({ type: req.query.type as string, day: req.query.day as string, viewerId })
     return res.json(posts)
   } catch (err: any) {
     return res.status(500).json({ error: err.message })

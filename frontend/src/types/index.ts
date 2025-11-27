@@ -75,3 +75,10 @@ export type ExerciseSession = {
   notes?: string
   mediaUrls?: string[]
 }
+
+export type PostsByDayResponse = {
+  day: string
+  posts: Post[]
+  previousDay: string | null
+  nextDay: string | null
+}

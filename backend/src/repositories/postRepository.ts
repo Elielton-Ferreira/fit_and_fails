@@ -1,8 +1,18 @@
 import { PostType } from '@prisma/client'
 import prisma from '../prisma'
 
-const findAll = async (filters?: { type?: PostType }) => {
-  const where = filters?.type ? { type: filters.type } : undefined
+const findAll = async (filters?: { type?: PostType; start?: Date; end?: Date }) => {
+  const where = {
+    ...(filters?.type ? { type: filters.type } : {}),
+    ...(filters?.start || filters?.end
+      ? {
+          createdAt: {
+            ...(filters?.start ? { gte: filters.start } : {}),
+            ...(filters?.end ? { lt: filters.end } : {})
+          }
+        }
+      : {})
+  }
   return prisma.post.findMany({
     where,
     include: {
@@ -47,6 +57,30 @@ const findByUserAndTypeBetween = async (userId: string, type: PostType, start: D
   })
 }
 
+const findPreviousDayWithPosts = async (before: Date, type?: PostType) => {
+  const previous = await prisma.post.findFirst({
+    where: {
+      ...(type ? { type } : {}),
+      createdAt: { lt: before }
+    },
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true }
+  })
+  return previous?.createdAt ?? null
+}
+
+const findNextDayWithPosts = async (after: Date, type?: PostType) => {
+  const next = await prisma.post.findFirst({
+    where: {
+      ...(type ? { type } : {}),
+      createdAt: { gt: after }
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { createdAt: true }
+  })
+  return next?.createdAt ?? null
+}
+
 const findByUserTypeAndBadgeBetween = async (userId: string, type: PostType, badgeType: string, start: Date, end: Date) => {
   return prisma.post.findFirst({
     where: {
@@ -66,4 +100,13 @@ const remove = async (id: string) => {
   ])
 }
 
-export default { findAll, create, findById, findByUserAndTypeBetween, findByUserTypeAndBadgeBetween, remove }
+export default {
+  findAll,
+  create,
+  findById,
+  findByUserAndTypeBetween,
+  findByUserTypeAndBadgeBetween,
+  findPreviousDayWithPosts,
+  findNextDayWithPosts,
+  remove
+}

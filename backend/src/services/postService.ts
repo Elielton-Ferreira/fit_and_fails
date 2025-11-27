@@ -41,10 +41,34 @@ const mapPost = (post: PostWithRelations, viewerId?: string) => ({
   }
 })
 
-const getAll = async ({ type, viewerId }: { type?: string; viewerId?: string } = {}) => {
+const getAll = async ({ type, viewerId, day }: { type?: string; viewerId?: string; day?: string } = {}) => {
   const normalizedType = type ? normalizeType(type) : undefined
-  const posts = await postRepository.findAll(normalizedType ? { type: normalizedType } : undefined)
-  return posts.map((post) => mapPost(post, viewerId))
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const baseDay = day ? new Date(day) : today
+  baseDay.setHours(0, 0, 0, 0)
+  const nextDay = new Date(baseDay)
+  nextDay.setDate(baseDay.getDate() + 1)
+
+  const posts = await postRepository.findAll({
+    ...(normalizedType ? { type: normalizedType } : {}),
+    start: baseDay,
+    end: nextDay
+  })
+  const mapped = posts.map((post) => mapPost(post, viewerId))
+
+  const previousDayDate = await postRepository.findPreviousDayWithPosts(baseDay, normalizedType)
+  const nextDayDate = await postRepository.findNextDayWithPosts(nextDay, normalizedType)
+
+  const formatDay = (d: Date | null) => (d ? d.toISOString().substring(0, 10) : null)
+
+  return {
+    day: baseDay.toISOString().substring(0, 10),
+    posts: mapped,
+    previousDay: formatDay(previousDayDate),
+    nextDay: formatDay(nextDayDate)
+  }
 }
 
 const create = async ({
