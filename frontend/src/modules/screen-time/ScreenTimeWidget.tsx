@@ -5,9 +5,15 @@ import Badge from '../../components/ui/Badge'
 import { ScreenTimeSummary } from '../../types'
 
 const ScreenTimeWidget = () => {
+  const todayLocal = () => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    return now.toISOString().substring(0, 10)
+  }
+
   const [summary, setSummary] = useState<ScreenTimeSummary | null>(null)
   const [pages, setPages] = useState(20)
-  const [date, setDate] = useState(() => new Date().toISOString().substring(0, 10))
+  const [date, setDate] = useState(() => todayLocal())
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [bookTitle, setBookTitle] = useState('Livro atual')
@@ -71,7 +77,7 @@ const ScreenTimeWidget = () => {
     try {
       setError('')
       await api.post('/screen-time/logs', {
-        date,
+        date: `${date}T12:00:00`, // envia com horário para evitar fuso voltar um dia
         minutes: pages
       })
       const logEntry = { date, minutes: pages, bookTitle, bookPages }
