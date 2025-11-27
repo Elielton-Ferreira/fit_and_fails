@@ -158,6 +158,9 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
   const resetImage = () => {
     setImageScale(1)
     setImageOffset({ x: 0, y: 0 })
+    setImageUrl('')
+    setImageMeta(null)
+    setMediaInfo('')
   }
 
   const startDrag = (point: { x: number; y: number }) => {
@@ -349,6 +352,14 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
                     onClick={() => setImageScale((prev) => Math.min(2, prev + 0.1))}
                   >
                     +
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="px-3 py-2 text-xs text-rose-200 hover:text-rose-100"
+                    onClick={resetImage}
+                  >
+                    Cancelar mídia
                   </Button>
                 </div>
               </div>
