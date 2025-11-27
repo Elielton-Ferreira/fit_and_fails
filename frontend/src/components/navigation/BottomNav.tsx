@@ -64,7 +64,7 @@ const BottomNav = () => (
         className={({ isActive }) =>
           [
             'flex flex-col items-center gap-1 rounded-xl px-2 text-xs font-medium transition',
-            isActive ? 'text-white drop-shadow-[0_5px_20px_rgba(91,141,255,0.35)]' : 'text-slate-300 hover:text-white'
+            isActive ? 'text-white drop-shadow-[0_6px_22px_rgba(63,124,255,0.45)]' : 'text-slate-300 hover:text-white'
           ].join(' ')
         }
       >

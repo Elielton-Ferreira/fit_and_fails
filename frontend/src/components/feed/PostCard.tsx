@@ -102,7 +102,7 @@ const PostCard = ({
 
       <div className="px-5 py-4">
         {post.badgeType && (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-200">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-200 drop-shadow-[0_2px_8px_rgba(63,124,255,0.55)]">
             🏅 {post.badgeType.replace(/_/g, ' ')}
           </p>
         )}

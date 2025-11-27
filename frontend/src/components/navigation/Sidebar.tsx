@@ -85,7 +85,7 @@ const Sidebar = () => {
               [
                 'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition backdrop-blur-sm',
                 isActive
-                  ? 'border-sky-200/70 bg-white/10 text-white shadow-[0_10px_30px_rgba(91,141,255,0.22)]'
+                  ? 'border-sky-200/80 bg-white/10 text-white shadow-[0_12px_36px_rgba(63,124,255,0.3)]'
                   : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
               ].join(' ')
             }
