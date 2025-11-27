@@ -4,10 +4,10 @@ import { useTheme } from '../../modules/theme/ThemeProvider'
 
 const IconFeed = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 10h12" />
-    <path d="M3 6h18" />
-    <path d="M3 14h12" />
-    <path d="M3 18h18" />
+    <path d="M4 5h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4 4v-4H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+    <path d="M8 10h8" />
+    <path d="M8 13h5" />
+    <circle cx="8.5" cy="7.5" r="0.75" fill="currentColor" stroke="none" />
   </svg>
 )
 
