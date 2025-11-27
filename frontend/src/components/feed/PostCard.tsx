@@ -110,7 +110,7 @@ const PostCard = ({
       </div>
 
       <div className="border-t border-white/5 px-5 py-3">
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
           <button
             type="button"
             onClick={() => onToggleLike(post.id, post.likes.likedByViewer)}
@@ -120,6 +120,12 @@ const PostCard = ({
             {post.likes.likedByViewer ? '❤️' : '🤍'}
           </button>
           <span>{post.likes.total} curtidas</span>
+          {post.likes.people && post.likes.people.length > 0 && (
+            <span className="text-xs text-slate-400">
+              Curtido por {post.likes.people[0].name}
+              {post.likes.people.length > 1 && ` e +${post.likes.people.length - 1}`}
+            </span>
+          )}
           <span>{post.comments.total} comentários</span>
         </div>
       </div>

@@ -17,7 +17,12 @@ const findAll = async (filters?: { type?: PostType; start?: Date; end?: Date }) 
     where,
     include: {
       user: { select: { id: true, name: true, avatarUrl: true } },
-      likes: { select: { userId: true } },
+      likes: {
+        select: {
+          userId: true,
+          user: { select: { id: true, name: true, avatarUrl: true } }
+        }
+      },
       comments: {
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, name: true, avatarUrl: true } } }
@@ -37,7 +42,12 @@ const findById = async (id: string) => {
     where: { id },
     include: {
       user: { select: { id: true, name: true, avatarUrl: true } },
-      likes: { select: { userId: true } },
+      likes: {
+        select: {
+          userId: true,
+          user: { select: { id: true, name: true, avatarUrl: true } }
+        }
+      },
       comments: {
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, name: true, avatarUrl: true } } }

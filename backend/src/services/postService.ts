@@ -8,7 +8,7 @@ const allowedTypes: PostType[] = ['water', 'screen_time', 'exercise', 'shame', '
 type PostWithRelations = Post & {
   user: { id: string; name: string; avatarUrl?: string | null }
   _count: { likes: number; comments: number }
-  likes: { userId: string }[]
+  likes: { userId: string; user: { id: string; name: string; avatarUrl?: string | null } }[]
   comments: { id: string; text: string; createdAt: Date; user: { id: string; name: string; avatarUrl?: string | null } }[]
 }
 
@@ -28,7 +28,12 @@ const mapPost = (post: PostWithRelations, viewerId?: string) => ({
   user: post.user,
   likes: {
     total: post._count.likes,
-    likedByViewer: viewerId ? post.likes.some((like) => like.userId === viewerId) : false
+    likedByViewer: viewerId ? post.likes.some((like) => like.userId === viewerId) : false,
+    people: post.likes
+      .map((like) => like.user)
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 3)
   },
   comments: {
     total: post._count.comments,

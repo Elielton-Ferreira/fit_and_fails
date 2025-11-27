@@ -16,6 +16,11 @@ export type Post = {
   likes: {
     total: number
     likedByViewer: boolean
+    people?: Array<{
+      id: string
+      name: string
+      avatarUrl?: string | null
+    }>
   }
   comments: {
     total: number
