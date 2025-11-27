@@ -32,12 +32,15 @@ const IconBook = () => (
   </svg>
 )
 
-const IconExercise = () => (
+const IconDumbbell = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 6h3l1 6 3-9h3" />
-    <path d="m4 20 2-3 4-1 2-5" />
-    <path d="M3 3l2 2" />
-    <path d="M17 5h4" />
+    <path d="M6 6v12" />
+    <path d="M18 6v12" />
+    <path d="M9 4v16" />
+    <path d="M15 4v16" />
+    <path d="M3 10v4" />
+    <path d="M21 10v4" />
+    <path d="M3 12h18" />
   </svg>
 )
 
@@ -53,7 +56,7 @@ const navItems = [
   { label: 'Criar', href: '/create', icon: <IconCreate /> },
   { label: 'Água', href: '/water', icon: <IconWater /> },
   { label: 'Livros', href: '/book', icon: <IconBook /> },
-  { label: 'Exercícios', href: '/exercise', icon: <IconExercise /> },
+  { label: 'Exercícios', href: '/exercise', icon: <IconDumbbell /> },
   { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
 
