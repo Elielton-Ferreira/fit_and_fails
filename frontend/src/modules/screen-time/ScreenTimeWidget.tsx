@@ -14,11 +14,15 @@ const ScreenTimeWidget = () => {
   const [bookPages, setBookPages] = useState(200)
   const [bookSaved, setBookSaved] = useState('')
   const [books, setBooks] = useState<Array<{ title: string; pages: number }>>([])
-  const [localLogs, setLocalLogs] = useState<Array<{ date: string; bookTitle?: string; bookPages?: number }>>([])
+  const [localLogs, setLocalLogs] = useState<Array<{ date: string; minutes: number; bookTitle?: string; bookPages?: number }>>([])
 
   const fetchSummary = useCallback(async () => {
-    const { data } = await api.get('/screen-time/summary')
-    setSummary(data)
+    try {
+      const { data } = await api.get('/screen-time/summary')
+      setSummary(data)
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Não foi possível carregar a leitura.')
+    }
   }, [])
 
   useEffect(() => {
@@ -70,9 +74,11 @@ const ScreenTimeWidget = () => {
         date,
         minutes: pages
       })
-      const logEntry = { date, bookTitle, bookPages }
+      const logEntry = { date, minutes: pages, bookTitle, bookPages }
       setLocalLogs((prev) => {
-        const updated = [...prev.filter((l) => l.date !== date), logEntry]
+        const dayKey = date
+        const filtered = prev.filter((l) => l.date.substring(0, 10) !== dayKey.substring(0, 10))
+        const updated = [...filtered, logEntry]
         try {
           localStorage.setItem('fit-fails-book-logs', JSON.stringify(updated))
         } catch {
@@ -108,6 +114,28 @@ const ScreenTimeWidget = () => {
       : summary.trend === 'up'
         ? 'Mais páginas, ótimo ritmo!'
         : 'Ritmo estável — siga assim'
+
+  const mergedLogs = (() => {
+    const fromBackend = summary.current.logs.map((log) => ({
+      ...log,
+      source: 'backend' as const,
+      day: log.date.substring(0, 10)
+    }))
+    const fallback = localLogs.map((log) => ({
+      id: `local-${log.date}`,
+      date: log.date,
+      minutes: log.minutes,
+      bookTitle: log.bookTitle,
+      bookPages: log.bookPages,
+      source: 'local' as const,
+      day: log.date.substring(0, 10)
+    }))
+    const map = new Map<string, (typeof fromBackend)[number]>()
+    ;[...fallback, ...fromBackend].forEach((log) => {
+      if (!map.has(log.day)) map.set(log.day, log)
+    })
+    return Array.from(map.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  })()
 
   return (
     <section id="screen" className="glass-panel rounded-3xl p-6">
@@ -224,33 +252,30 @@ const ScreenTimeWidget = () => {
         <p className="text-sm font-semibold text-white">Histórico de registros</p>
         {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
-          {summary.current.logs.length === 0 && <p className="text-sm text-slate-500">Nenhum registro recente.</p>}
-          {summary.current.logs
-            .slice()
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .map((log) => {
-              const label = new Date(log.date).toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-              })
-              const dayKey = log.date.substring(0, 10)
-              const localBook = localLogs.find((l) => l.date.substring(0, 10) === dayKey)
-              const logBook = log.bookTitle || localBook?.bookTitle || 'Livro não informado'
-              return (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
-                >
-                  <div className="flex flex-col">
-                    <span>{label}</span>
-                    <span className="text-xs text-slate-400">{logBook}</span>
-                  </div>
-                  <span className="font-semibold text-white">{log.minutes} págs</span>
+          {mergedLogs.length === 0 && <p className="text-sm text-slate-500">Nenhum registro recente.</p>}
+          {mergedLogs.map((log) => {
+            const label = new Date(log.date).toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+            const dayKey = log.date.substring(0, 10)
+            const localBook = localLogs.find((l) => l.date.substring(0, 10) === dayKey)
+            const logBook = log.bookTitle || localBook?.bookTitle || 'Livro não informado'
+            return (
+              <div
+                key={log.id}
+                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
+              >
+                <div className="flex flex-col">
+                  <span>{label}</span>
+                  <span className="text-xs text-slate-400">{logBook}</span>
                 </div>
-              )
-            })}
+                <span className="font-semibold text-white">{log.minutes} págs</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
