@@ -22,11 +22,13 @@ const postTypes: { value: PostType; label: string; icon: JSX.Element }[] = [
     label: 'Exercício',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 6h2l1 7 4-10h2" />
-        <path d="m5 20 2-3 4-1 2-5" />
-        <path d="M3 3l2 2" />
-        <path d="M18 5h3" />
-        <path d="M12 21h1" />
+        <path d="M6 6v12" />
+        <path d="M18 6v12" />
+        <path d="M9 4v16" />
+        <path d="M15 4v16" />
+        <path d="M3 10v4" />
+        <path d="M21 10v4" />
+        <path d="M3 12h18" />
       </svg>
     )
   },
