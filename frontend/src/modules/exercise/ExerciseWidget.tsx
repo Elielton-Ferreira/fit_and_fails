@@ -164,11 +164,11 @@ const ExerciseWidget = () => {
                   key={d}
                   type="button"
                   onClick={() => setDuration(d)}
-                  className={[
-                    'rounded-xl border px-3 py-2 text-sm transition',
-                    duration === d ? 'border-primary bg-white/15 text-white' : 'border-white/10 bg-white/5 text-slate-200 hover:border-primary'
-                  ].join(' ')}
-                >
+                className={[
+                  'rounded-xl border px-3 py-2 text-sm transition',
+                  duration === d ? 'border-primary bg-white/15 text-white' : 'border-white/10 bg-white/5 text-slate-200 hover:border-primary'
+                ].join(' ')}
+              >
                   {d} min
                 </button>
               ))}
@@ -188,15 +188,13 @@ const ExerciseWidget = () => {
               <Button
                 type="button"
                 variant="secondary"
-                className="flex items-center gap-2 px-4 py-2 text-sm"
+                className="flex items-center justify-center gap-2 px-4 py-3 text-sm border border-white/30 bg-white/20 text-white hover:bg-white/30 transition w-full sm:w-auto"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <span role="img" aria-label="camera">
-                  📷
-                </span>
+                <IconCamera />
                 Enviar foto/vídeo
               </Button>
-              {mediaLabel && <span className="text-xs text-emerald-200">{mediaLabel}</span>}
+              {mediaLabel && <span className="text-xs text-sky-200">{mediaLabel}</span>}
             </div>
             {mediaError && <p className="mt-2 text-xs text-rose-300">{mediaError}</p>}
             <input
@@ -240,7 +238,7 @@ const ExerciseWidget = () => {
                 className={[
                   'flex h-10 flex-col items-center justify-center rounded-lg border text-xs transition',
                   hasWorkout
-                    ? 'border-emerald-400/50 bg-emerald-400/20 text-emerald-100'
+                    ? 'border-sky-300/60 bg-sky-400/20 text-sky-100'
                     : 'border-white/10 bg-white/5 text-slate-400'
                 ].join(' ')}
                 title={hasWorkout ? `${count} treino(s)` : 'Sem treino'}
@@ -273,3 +271,21 @@ const ExerciseWidget = () => {
 }
 
 export default ExerciseWidget
+const IconCamera = () => (
+  <svg
+    width="80"
+    height="80"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="text-white"
+  >
+    <rect x="3" y="7" width="18" height="12" rx="2" />
+    <path d="M9 7l1-2h4l1 2" />
+    <circle cx="12" cy="13" r="4" />
+    <path d="M17.5 9.5v.01" />
+  </svg>
+)

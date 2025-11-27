@@ -9,9 +9,9 @@ type BadgeProps = {
 }
 
 const colors: Record<NonNullable<BadgeProps['variant']>, string> = {
-  success: 'bg-emerald-100 text-emerald-800',
-  warn: 'bg-amber-100 text-amber-800',
-  info: 'bg-sky-100 text-sky-800'
+  success: 'border border-sky-300/50 bg-sky-500/20 text-sky-100',
+  warn: 'border border-amber-300/50 bg-amber-500/15 text-amber-100',
+  info: 'border border-sky-300/40 bg-sky-500/20 text-sky-100'
 }
 
 const Badge = ({ label, icon, variant = 'info', className }: BadgeProps) => (

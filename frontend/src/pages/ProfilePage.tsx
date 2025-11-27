@@ -87,7 +87,7 @@ const ProfilePage = () => {
             <p className="text-sm text-slate-400">E-mail: {user?.email}</p>
           </div>
           {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
-          {info && <p className="mt-3 text-sm text-emerald-300">{info}</p>}
+          {info && <p className="mt-3 text-sm text-sky-200">{info}</p>}
           <div className="mt-4">
             <Button type="button" onClick={save}>
               Salvar perfil

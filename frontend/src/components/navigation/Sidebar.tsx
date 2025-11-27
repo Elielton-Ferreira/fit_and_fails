@@ -1,35 +1,92 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../modules/auth/AuthContext'
+import { useTheme } from '../../modules/theme/ThemeProvider'
+
+const IconFeed = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 10h12" />
+    <path d="M3 6h18" />
+    <path d="M3 14h12" />
+    <path d="M3 18h18" />
+  </svg>
+)
+
+const IconCreate = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </svg>
+)
+
+const IconWater = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3s-5 6-5 10a5 5 0 0 0 10 0c0-4-5-10-5-10Z" />
+  </svg>
+)
+
+const IconScreen = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="12" rx="2" />
+    <path d="M12 17v2" />
+    <path d="M8 21h8" />
+  </svg>
+)
+
+const IconExercise = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 6h3l1 6 3-9h3" />
+    <path d="m4 20 2-3 4-1 2-5" />
+    <path d="M3 3l2 2" />
+    <path d="M17 5h4" />
+  </svg>
+)
+
+const IconProfile = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c1.5-3 4.5-4 8-4s6.5 1 8 4" />
+  </svg>
+)
 
 const navItems = [
-  { label: 'Feed', href: '/dashboard', icon: '📣' },
-  { label: 'Criar', href: '/create', icon: '➕' },
-  { label: 'Água', href: '/water', icon: '💧' },
-  { label: 'Tempo de Tela', href: '/screen', icon: '⌛' },
-  { label: 'Exercícios', href: '/exercise', icon: '💪' },
-  { label: 'Perfil', href: '/profile', icon: '👤' }
+  { label: 'Feed', href: '/dashboard', icon: <IconFeed /> },
+  { label: 'Criar', href: '/create', icon: <IconCreate /> },
+  { label: 'Água', href: '/water', icon: <IconWater /> },
+  { label: 'Tempo de Tela', href: '/screen', icon: <IconScreen /> },
+  { label: 'Exercícios', href: '/exercise', icon: <IconExercise /> },
+  { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
 
 const Sidebar = () => {
   const { user, logout } = useAuth()
+  const { theme, toggle } = useTheme()
 
   return (
-    <aside className="glass-panel hidden w-64 flex-col rounded-3xl p-6 text-slate-100 lg:flex">
-      <div className="mb-10">
+    <aside className="glass-panel hidden w-64 flex-col rounded-3xl border border-white/10 p-6 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] lg:flex">
+      <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.4em] text-slate-400">Fit &amp; Fails</p>
         <h2 className="mt-2 text-2xl font-semibold leading-tight">
-          Disciplina com <span className="text-primary">humor</span>
+          Disciplina com <span className="text-sky-300">humor</span>
         </h2>
       </div>
-      <nav className="flex flex-col gap-2 mb-4">
+      <button
+        type="button"
+        onClick={toggle}
+        className="mb-6 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-sky-200/60 hover:bg-white/10"
+      >
+        {theme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro'}
+      </button>
+      <nav className="mb-4 flex flex-col gap-2">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
             className={({ isActive }) =>
               [
-                'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition',
-                isActive ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition backdrop-blur-sm',
+                isActive
+                  ? 'border-sky-200/70 bg-white/10 text-white shadow-[0_10px_30px_rgba(91,141,255,0.22)]'
+                  : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
               ].join(' ')
             }
           >
@@ -38,25 +95,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-      <div className="mt-6 rounded-2xl border border-white/10 p-4">
-        <p className="text-sm text-slate-400">Logado como</p>
-        <div className="mt-2 flex items-center gap-3 overflow-hidden">
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-bold uppercase">
-              {user?.name?.slice(0, 1)}
-            </div>
-          )}
-          <div>
-            <p className="max-w-[150px] truncate text-lg font-semibold text-white">{user?.name}</p>
-            <p className="max-w-[150px] truncate text-xs text-slate-400">{user?.email}</p>
-          </div>
-        </div>
-        <button className="mt-4 text-sm text-primary hover:underline" onClick={logout}>
-          Encerrar sessão
-        </button>
-      </div>
     </aside>
   )
 }

@@ -6,8 +6,8 @@ module.exports = {
         sans: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        primary: '#54f0c3',
-        secondary: '#ffd166',
+        primary: '#5b8dff',
+        secondary: '#93c5fd',
         night: '#0f172a',
         mist: '#64748b',
       },

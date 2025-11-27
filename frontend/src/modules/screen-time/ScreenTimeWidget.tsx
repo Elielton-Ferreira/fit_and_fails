@@ -102,7 +102,7 @@ const ScreenTimeWidget = () => {
         </div>
       </div>
 
-      {message && <p className="mt-4 text-sm text-emerald-300">{message}</p>}
+      {message && <p className="mt-4 text-sm text-sky-200">{message}</p>}
     </section>
   )
 }

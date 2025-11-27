@@ -112,7 +112,7 @@ const WaterWidget = () => {
         </div>
       </div>
 
-      {feedback && <p className="mt-4 text-sm text-emerald-300">{feedback}</p>}
+      {feedback && <p className="mt-4 text-sm text-sky-200">{feedback}</p>}
 
       <div className="mt-6 rounded-2xl border border-white/5 p-4">
         <p className="text-sm font-semibold text-white">Histórico de ingestão</p>

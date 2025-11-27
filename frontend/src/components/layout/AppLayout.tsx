@@ -4,8 +4,10 @@ import BottomNav from '../navigation/BottomNav'
 
 const AppLayout = ({ children }: { children: ReactNode }) => (
   <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-8 lg:flex-row lg:px-8">
-    <Sidebar />
-    <main className="flex-1 pb-24 lg:pb-0">{children}</main>
+    <div className="lg:sticky lg:top-8 lg:self-start">
+      <Sidebar />
+    </div>
+    <main className="flex-1 pb-24 lg:pb-0 lg:pt-4">{children}</main>
     <BottomNav />
   </div>
 )

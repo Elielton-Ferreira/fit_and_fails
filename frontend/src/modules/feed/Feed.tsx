@@ -67,11 +67,7 @@ const Feed = () => {
   }
 
   return (
-    <section id="feed" className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <p className="text-sm text-slate-400">Compartilhe o que rolou</p>
-        <h3 className="text-2xl font-semibold text-white">Feed Fit &amp; Fails</h3>
-      </div>
+    <section id="feed" className="mx-auto max-w-3xl space-y-6">
       <PostComposer onCreated={handleNewPost} />
       {error && <p className="text-sm text-rose-300">{error}</p>}
       {loading ? (
