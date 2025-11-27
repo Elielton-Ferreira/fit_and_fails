@@ -9,6 +9,7 @@ const ScreenTimeWidget = () => {
   const [pages, setPages] = useState(20)
   const [date, setDate] = useState(() => new Date().toISOString().substring(0, 10))
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
   const [bookTitle, setBookTitle] = useState('Livro atual')
   const [bookPages, setBookPages] = useState(200)
   const [bookSaved, setBookSaved] = useState('')
@@ -57,15 +58,20 @@ const ScreenTimeWidget = () => {
   }
 
   const recordLog = async () => {
-    await api.post('/screen-time/logs', {
-      date,
-      minutes: pages,
-      bookTitle,
-      bookPages
-    })
-    setMessage('Leitura registrada 📖')
-    fetchSummary()
-    setTimeout(() => setMessage(''), 2000)
+    try {
+      setError('')
+      await api.post('/screen-time/logs', {
+        date,
+        minutes: pages,
+        bookTitle,
+        bookPages
+      })
+      setMessage('Leitura registrada 📖')
+      fetchSummary()
+      setTimeout(() => setMessage(''), 2000)
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Não foi possível registrar agora.')
+    }
   }
 
   const share = async () => {
@@ -202,6 +208,7 @@ const ScreenTimeWidget = () => {
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="text-sm font-semibold text-white">Histórico de registros</p>
+        {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
           {summary.current.logs.length === 0 && <p className="text-sm text-slate-500">Nenhum registro recente.</p>}
           {summary.current.logs
@@ -214,6 +221,7 @@ const ScreenTimeWidget = () => {
                 hour: '2-digit',
                 minute: '2-digit'
               })
+              const logBook = log.bookTitle || 'Livro não informado'
               return (
                 <div
                   key={log.id}
@@ -221,7 +229,7 @@ const ScreenTimeWidget = () => {
                 >
                   <div className="flex flex-col">
                     <span>{label}</span>
-                    {log.bookTitle && <span className="text-xs text-slate-400">{log.bookTitle}</span>}
+                    <span className="text-xs text-slate-400">{logBook}</span>
                   </div>
                   <span className="font-semibold text-white">{log.minutes} págs</span>
                 </div>
