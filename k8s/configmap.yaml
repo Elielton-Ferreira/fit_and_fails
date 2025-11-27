@@ -7,4 +7,4 @@ data:
   PORT: "4000"
   WATER_DEFAULT_GOAL: "2000"
   FRONTEND_URL: "https://fitandfails.example.com"
-  VITE_API_URL: "https://fitandfails.example.com"
+  VITE_API_URL: "https://fitandfails.example.com/api"

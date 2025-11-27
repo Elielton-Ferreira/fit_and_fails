@@ -5,7 +5,7 @@ import api from '../lib/api'
 import { useAuth } from '../modules/auth/AuthContext'
 
 const ProfilePage = () => {
-  const { user, setUser } = useAuth()
+  const { user, setUser, logout } = useAuth()
   const [name, setName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null)
   const [info, setInfo] = useState('')
@@ -88,9 +88,12 @@ const ProfilePage = () => {
           </div>
           {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
           {info && <p className="mt-3 text-sm text-sky-200">{info}</p>}
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-3">
             <Button type="button" onClick={save}>
               Salvar perfil
+            </Button>
+            <Button type="button" variant="ghost" onClick={logout} className="border border-rose-300/40 text-rose-200 hover:bg-rose-500/10">
+              Sair
             </Button>
           </div>
         </div>
