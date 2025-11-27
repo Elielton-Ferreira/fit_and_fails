@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import api from '../../lib/api'
 import Button from '../ui/Button'
 import { Post, PostType } from '../../types'
@@ -87,10 +87,17 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
   const [type, setType] = useState<PostType>('healthy_food')
   const [text, setText] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [imageScale, setImageScale] = useState(1)
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
+  const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null)
+  const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mediaInfo, setMediaInfo] = useState('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const dragging = useRef(false)
+  const lastPos = useRef({ x: 0, y: 0 })
+  const previewRef = useRef<HTMLDivElement | null>(null)
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -101,10 +108,22 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
     try {
       setLoading(true)
       setError('')
-      const { data } = await api.post('/posts', { type, text, imageUrl: imageUrl || undefined })
+      let finalImage = imageUrl
+      if (imageUrl && imageMeta && previewSize) {
+        try {
+          finalImage = await cropImage(imageUrl, imageMeta, previewSize, imageScale, baseScale, imageOffset)
+        } catch {
+          finalImage = imageUrl
+        }
+      }
+
+      const { data } = await api.post('/posts', { type, text, imageUrl: finalImage || undefined })
       onCreated(data)
       setText('')
       setImageUrl('')
+      setImageScale(1)
+      setImageOffset({ x: 0, y: 0 })
+      setImageMeta(null)
       setMediaInfo('')
       document.getElementById('feed')?.scrollIntoView({ behavior: 'smooth' })
       onPublished?.()
@@ -127,8 +146,82 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
       setImageUrl(String(reader.result))
       setMediaInfo(`Mídia anexada: ${file.name}`)
       setError('')
+      const img = new Image()
+      img.onload = () => setImageMeta({ width: img.naturalWidth, height: img.naturalHeight })
+      img.src = String(reader.result)
     }
     reader.readAsDataURL(file)
+  }
+
+  const resetImage = () => {
+    setImageScale(1)
+    setImageOffset({ x: 0, y: 0 })
+  }
+
+  const startDrag = (point: { x: number; y: number }) => {
+    dragging.current = true
+    lastPos.current = { x: point.x, y: point.y }
+  }
+
+  const moveDrag = (point: { x: number; y: number }) => {
+    if (!dragging.current) return
+    const dx = point.x - lastPos.current.x
+    const dy = point.y - lastPos.current.y
+    setImageOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
+    lastPos.current = { x: point.x, y: point.y }
+  }
+
+  const onDragEnd = () => {
+    dragging.current = false
+  }
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (!previewRef.current) return
+      const rect = previewRef.current.getBoundingClientRect()
+      setPreviewSize({ width: rect.width, height: rect.height })
+    }
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [imageUrl])
+
+  const baseScale = useMemo(() => {
+    if (!imageMeta || !previewSize) return 1
+    return Math.max(previewSize.width / imageMeta.width, previewSize.height / imageMeta.height)
+  }, [imageMeta, previewSize])
+
+  const cropImage = async (
+    dataUrl: string,
+    meta: { width: number; height: number },
+    viewport: { width: number; height: number },
+    scale: number,
+    base: number,
+    offset: { x: number; y: number }
+  ) => {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = reject
+      i.src = dataUrl
+    })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return dataUrl
+
+    const scaledWidth = meta.width * base * scale
+    const scaledHeight = meta.height * base * scale
+    const dx = viewport.width / 2 - scaledWidth / 2 + offset.x
+    const dy = viewport.height / 2 - scaledHeight / 2 + offset.y
+
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, viewport.width, viewport.height)
+    ctx.drawImage(img, dx, dy, scaledWidth, scaledHeight)
+
+    return canvas.toDataURL('image/jpeg', 0.92)
   }
 
   return (
@@ -187,6 +280,78 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
             className="hidden"
             onChange={handleFileChange}
           />
+          {imageUrl && (
+            <div className="mt-4 space-y-3">
+              <div
+                className="relative h-72 w-full overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+                onMouseDown={(event) => startDrag({ x: event.clientX, y: event.clientY })}
+                onMouseMove={(event) => moveDrag({ x: event.clientX, y: event.clientY })}
+                onMouseUp={onDragEnd}
+                onMouseLeave={onDragEnd}
+                onTouchStart={(event) => {
+                  const touch = event.touches[0]
+                  if (touch) startDrag({ x: touch.clientX, y: touch.clientY })
+                }}
+                onTouchMove={(event) => {
+                  const touch = event.touches[0]
+                  if (touch) moveDrag({ x: touch.clientX, y: touch.clientY })
+                }}
+                onTouchEnd={onDragEnd}
+                ref={previewRef}
+                role="presentation"
+              >
+                <img
+                  src={imageUrl}
+                  alt="Pré-visualização"
+                  className="absolute left-1/2 top-1/2 max-w-none select-none"
+                  style={{
+                    width: imageMeta ? imageMeta.width * baseScale : '100%',
+                    height: imageMeta ? imageMeta.height * baseScale : '100%',
+                    transform: `translate(-50%, -50%) translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale})`,
+                    objectFit: 'cover'
+                  }}
+                  draggable={false}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/30" />
+              </div>
+              <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Zoom</span>
+                  <span className="text-xs text-slate-400">{Math.round(imageScale * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0.8}
+                  max={2}
+                  step={0.05}
+                  value={imageScale}
+                  onChange={(event) => setImageScale(Number(event.target.value))}
+                  className="w-full accent-sky-300"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" className="px-3 py-2 text-xs" onClick={resetImage}>
+                    Centralizar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="px-3 py-2 text-xs"
+                    onClick={() => setImageScale((prev) => Math.max(0.8, prev - 0.1))}
+                  >
+                    -
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="px-3 py-2 text-xs"
+                    onClick={() => setImageScale((prev) => Math.min(2, prev + 0.1))}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
