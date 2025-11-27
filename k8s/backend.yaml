@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/example/fit-and-fails-backend:latest
+          image: docker.io/elieltondevopsengineer/fit-and-fails-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
