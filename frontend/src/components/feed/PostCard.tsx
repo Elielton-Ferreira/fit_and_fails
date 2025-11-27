@@ -117,7 +117,7 @@ const PostCard = ({
             className="text-lg transition hover:scale-105"
             aria-label={post.likes.likedByViewer ? 'Remover curtida' : 'Curtir'}
           >
-            {post.likes.likedByViewer ? '💚' : '🤍'}
+            {post.likes.likedByViewer ? '❤️' : '🤍'}
           </button>
           <span>{post.likes.total} curtidas</span>
           <span>{post.comments.total} comentários</span>
