@@ -155,7 +155,12 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
     reader.readAsDataURL(file)
   }
 
-  const resetImage = () => {
+  const centerImage = () => {
+    setImageScale(1)
+    setImageOffset({ x: 0, y: 0 })
+  }
+
+  const clearMedia = () => {
     setImageScale(1)
     setImageOffset({ x: 0, y: 0 })
     setImageUrl('')
@@ -334,7 +339,7 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
                   className="w-full accent-sky-300"
                 />
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="secondary" className="px-3 py-2 text-xs" onClick={resetImage}>
+                  <Button type="button" variant="secondary" className="px-3 py-2 text-xs" onClick={centerImage}>
                     Centralizar
                   </Button>
                   <Button
@@ -357,7 +362,7 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
                     type="button"
                     variant="ghost"
                     className="px-3 py-2 text-xs text-rose-200 hover:text-rose-100"
-                    onClick={resetImage}
+                    onClick={clearMedia}
                   >
                     Cancelar mídia
                   </Button>
