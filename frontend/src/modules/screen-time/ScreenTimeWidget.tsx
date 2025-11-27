@@ -164,6 +164,33 @@ const ScreenTimeWidget = () => {
         </div>
       </div>
 
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Histórico de registros</p>
+        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+          {summary.current.logs.length === 0 && <p className="text-sm text-slate-500">Nenhum registro recente.</p>}
+          {summary.current.logs
+            .slice()
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((log) => {
+              const label = new Date(log.date).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
+                >
+                  <span>{label}</span>
+                  <span className="font-semibold text-white">{log.minutes} págs</span>
+                </div>
+              )
+            })}
+        </div>
+      </div>
+
       {message && <p className="mt-4 text-sm text-sky-200">{message}</p>}
     </section>
   )
