@@ -14,6 +14,7 @@ const ScreenTimeWidget = () => {
   const [bookPages, setBookPages] = useState(200)
   const [bookSaved, setBookSaved] = useState('')
   const [books, setBooks] = useState<Array<{ title: string; pages: number }>>([])
+  const [localLogs, setLocalLogs] = useState<Array<{ date: string; bookTitle?: string; bookPages?: number }>>([])
 
   const fetchSummary = useCallback(async () => {
     const { data } = await api.get('/screen-time/summary')
@@ -35,6 +36,11 @@ const ScreenTimeWidget = () => {
         if (Array.isArray(parsedList)) {
           setBooks(parsedList)
         }
+      }
+      const storedLogs = localStorage.getItem('fit-fails-book-logs')
+      if (storedLogs) {
+        const parsedLogs = JSON.parse(storedLogs)
+        if (Array.isArray(parsedLogs)) setLocalLogs(parsedLogs)
       }
     } catch {
       // ignore
@@ -62,9 +68,17 @@ const ScreenTimeWidget = () => {
       setError('')
       await api.post('/screen-time/logs', {
         date,
-        minutes: pages,
-        bookTitle,
-        bookPages
+        minutes: pages
+      })
+      const logEntry = { date, bookTitle, bookPages }
+      setLocalLogs((prev) => {
+        const updated = [...prev.filter((l) => l.date !== date), logEntry]
+        try {
+          localStorage.setItem('fit-fails-book-logs', JSON.stringify(updated))
+        } catch {
+          // ignore
+        }
+        return updated
       })
       setMessage('Leitura registrada 📖')
       fetchSummary()
@@ -221,7 +235,9 @@ const ScreenTimeWidget = () => {
                 hour: '2-digit',
                 minute: '2-digit'
               })
-              const logBook = log.bookTitle || 'Livro não informado'
+              const dayKey = log.date.substring(0, 10)
+              const localBook = localLogs.find((l) => l.date.substring(0, 10) === dayKey)
+              const logBook = log.bookTitle || localBook?.bookTitle || 'Livro não informado'
               return (
                 <div
                   key={log.id}
