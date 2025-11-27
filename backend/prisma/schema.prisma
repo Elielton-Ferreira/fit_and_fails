@@ -57,6 +57,8 @@ model ScreenTimeLog {
   userId  String
   date    DateTime
   minutes Int
+  bookTitle String?
+  bookPages Int?
 
   @@unique([userId, date], name: "user_date_day")
   @@index([userId, date])

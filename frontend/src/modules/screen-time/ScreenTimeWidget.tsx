@@ -12,6 +12,7 @@ const ScreenTimeWidget = () => {
   const [bookTitle, setBookTitle] = useState('Livro atual')
   const [bookPages, setBookPages] = useState(200)
   const [bookSaved, setBookSaved] = useState('')
+  const [books, setBooks] = useState<Array<{ title: string; pages: number }>>([])
 
   const fetchSummary = useCallback(async () => {
     const { data } = await api.get('/screen-time/summary')
@@ -22,10 +23,17 @@ const ScreenTimeWidget = () => {
     fetchSummary()
     try {
       const stored = localStorage.getItem('fit-fails-book')
+      const storedList = localStorage.getItem('fit-fails-books')
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed.title) setBookTitle(parsed.title)
         if (parsed.pages) setBookPages(parsed.pages)
+      }
+      if (storedList) {
+        const parsedList = JSON.parse(storedList)
+        if (Array.isArray(parsedList)) {
+          setBooks(parsedList)
+        }
       }
     } catch {
       // ignore
@@ -38,6 +46,9 @@ const ScreenTimeWidget = () => {
     setBookPages(payload.pages)
     try {
       localStorage.setItem('fit-fails-book', JSON.stringify(payload))
+      const nextList = Array.from(new Map([...books, payload].map((b) => [b.title, b])).values())
+      setBooks(nextList)
+      localStorage.setItem('fit-fails-books', JSON.stringify(nextList))
     } catch {
       // ignore
     }
@@ -46,7 +57,12 @@ const ScreenTimeWidget = () => {
   }
 
   const recordLog = async () => {
-    await api.post('/screen-time/logs', { date, minutes: pages })
+    await api.post('/screen-time/logs', {
+      date,
+      minutes: pages,
+      bookTitle,
+      bookPages
+    })
     setMessage('Leitura registrada 📖')
     fetchSummary()
     setTimeout(() => setMessage(''), 2000)
@@ -114,6 +130,26 @@ const ScreenTimeWidget = () => {
           <p className="mt-3 text-xs text-slate-400">
             {bookTitle} • {bookPages} páginas
           </p>
+          {books.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {books.map((bk) => (
+                <button
+                  key={bk.title}
+                  type="button"
+                  onClick={() => {
+                    setBookTitle(bk.title)
+                    setBookPages(bk.pages)
+                  }}
+                  className={[
+                    'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                    bk.title === bookTitle ? 'border-primary bg-white/10 text-white' : 'border-white/10 bg-white/5 text-slate-200 hover:border-primary'
+                  ].join(' ')}
+                >
+                  {bk.title} • {bk.pages} págs
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <p className="text-sm text-slate-400">Progresso semanal</p>
@@ -183,7 +219,10 @@ const ScreenTimeWidget = () => {
                   key={log.id}
                   className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
                 >
-                  <span>{label}</span>
+                  <div className="flex flex-col">
+                    <span>{label}</span>
+                    {log.bookTitle && <span className="text-xs text-slate-400">{log.bookTitle}</span>}
+                  </div>
                   <span className="font-semibold text-white">{log.minutes} págs</span>
                 </div>
               )

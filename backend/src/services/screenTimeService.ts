@@ -25,9 +25,21 @@ const addDays = (date: Date, days: number) => {
   return clone
 }
 
-const recordLog = async ({ userId, date, minutes }: { userId: string; date: Date; minutes: number }) => {
+const recordLog = async ({
+  userId,
+  date,
+  minutes,
+  bookTitle,
+  bookPages
+}: {
+  userId: string
+  date: Date
+  minutes: number
+  bookTitle?: string
+  bookPages?: number
+}) => {
   const normalizedDate = startOfDay(date)
-  return screenTimeRepository.upsertLog(userId, normalizedDate, minutes)
+  return screenTimeRepository.upsertLog(userId, normalizedDate, minutes, bookTitle, bookPages)
 }
 
 const buildWeekSummary = async (userId: string, start: Date, end: Date) => {

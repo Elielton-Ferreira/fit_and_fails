@@ -56,6 +56,8 @@ export type ScreenTimeSummary = {
       id: string
       date: string
       minutes: number
+      bookTitle?: string | null
+      bookPages?: number | null
     }>
   }
   previous: {
