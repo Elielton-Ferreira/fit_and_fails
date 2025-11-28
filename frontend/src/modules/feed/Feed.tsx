@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import PostCard from '../../components/feed/PostCard'
+import { useTheme } from '../theme/ThemeProvider'
 import PostComposer from '../../components/feed/PostComposer'
 import api from '../../lib/api'
 import { Post, PostsByDayResponse } from '../../types'
 import { useAuth } from '../auth/AuthContext'
 
 const Feed = () => {
+  const { theme } = useTheme()
   const { user } = useAuth()
   const [sections, setSections] = useState<Array<{ day: string; posts: Post[] }>>([])
   const [previousDayCursor, setPreviousDayCursor] = useState<string | null>(null)
@@ -128,11 +130,20 @@ const Feed = () => {
         <div className="space-y-8">
           {sections.map((section) => (
             <div key={section.day} className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-slate-300">
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white">
+              <div className={`flex items-center gap-3 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
+                <span
+                  className={[
+                    'rounded-full px-3 py-1 font-semibold',
+                    theme === 'light'
+                      ? 'border border-slate-200 bg-white text-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.04)]'
+                      : 'border border-white/10 bg-white/5 text-white'
+                  ].join(' ')}
+                >
                   {dayLabel(new Date(section.day))}
                 </span>
-                <span className="text-xs text-slate-500">{section.posts.length} posts</span>
+                <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                  {section.posts.length} posts
+                </span>
               </div>
               <div className="space-y-4">
                 {section.posts.map((post) => (
