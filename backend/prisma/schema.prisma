@@ -77,6 +77,33 @@ model ExerciseSession {
   mediaUrls String[] @default([])
 }
 
+model Book {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  title      String
+  totalPages Int?
+  logs       BookLog[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model BookLog {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    String
+  date      DateTime
+  pages     Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@index([bookId, date])
+}
+
 model Like {
   id     String @id @default(cuid())
   post   Post   @relation(fields: [postId], references: [id])

@@ -89,3 +89,19 @@ export type PostsByDayResponse = {
   previousDay: string | null
   nextDay: string | null
 }
+
+export type Book = {
+  id: string
+  title: string
+  totalPages?: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type BookLog = {
+  id: string
+  bookId: string
+  pages: number
+  date: string
+  book: Book
+}
