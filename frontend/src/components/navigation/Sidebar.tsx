@@ -62,6 +62,8 @@ const navItems = [
 const Sidebar = () => {
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
+  const brandPrimary = theme === 'light' ? 'text-slate-900' : 'text-slate-100'
+  const brandAccent = theme === 'light' ? 'text-sky-600' : 'text-sky-300'
 
   const handleNavClick = (href: string) => {
     if (href === '/dashboard') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -70,9 +72,9 @@ const Sidebar = () => {
   return (
     <aside className="glass-panel hidden w-64 flex-col rounded-3xl border border-white/10 p-6 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] lg:sticky lg:top-4 lg:flex">
       <div className="mb-6">
-        <p className="text-sm uppercase tracking-[0.4em] text-slate-400">Fit &amp; Fails</p>
-        <h2 className="mt-2 text-2xl font-semibold leading-tight">
-          Disciplina com <span className="text-sky-300">humor</span>
+        <p className={`text-sm uppercase tracking-[0.4em] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Fit &amp; Fails</p>
+        <h2 className={`mt-2 text-2xl font-semibold leading-tight ${brandPrimary}`}>
+          Disciplina com <span className={brandAccent}>humor</span>
         </h2>
       </div>
       <button

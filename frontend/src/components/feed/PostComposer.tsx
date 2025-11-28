@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useRef, useState, useEffect, useMemo } from 'react'
+import { useTheme } from '../../modules/theme/ThemeProvider'
 import api from '../../lib/api'
 import Button from '../ui/Button'
 import { Post, PostType } from '../../types'
@@ -77,6 +78,7 @@ const IconCamera = () => (
 )
 
 const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => void; onPublished?: () => void }) => {
+  const { theme } = useTheme()
   const [type, setType] = useState<PostType>('healthy_food')
   const [text, setText] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -228,12 +230,14 @@ const cropImage = async (
   return (
     <form
       onSubmit={handleSubmit}
-      className="glass-panel rounded-3xl border border-white/10 p-6 text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)]"
+      className="glass-panel rounded-3xl border border-white/10 p-6 shadow-[0_16px_50px_rgba(0,0,0,0.4)]"
     >
       <div className="flex flex-col gap-2">
-        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Compartilhe</p>
-        <h3 className="text-xl font-semibold">O que rolou no seu dia?</h3>
-        <p className="text-sm text-slate-400">Escolha o tipo do post, suba mídia opcional e publique direto no feed.</p>
+        <p className={`text-sm uppercase tracking-[0.3em] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Compartilhe</p>
+        <h3 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>O que rolou no seu dia?</h3>
+        <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+          Escolha o tipo do post, suba mídia opcional e publique direto no feed.
+        </p>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

@@ -3,9 +3,11 @@ import AppLayout from '../components/layout/AppLayout'
 import Button from '../components/ui/Button'
 import api from '../lib/api'
 import { useAuth } from '../modules/auth/AuthContext'
+import { useTheme } from '../modules/theme/ThemeProvider'
 
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth()
+  const { theme } = useTheme()
   const [name, setName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null)
   const [info, setInfo] = useState('')
@@ -114,12 +116,12 @@ const ProfilePage = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <header className="glass-panel rounded-3xl p-6 text-white">
-          <p className="text-sm text-slate-400">Perfil</p>
-          <h1 className="mt-2 text-3xl font-semibold">Atualize seus dados</h1>
-          <p className="mt-1 text-sm text-slate-400">Foto de perfil e nome.</p>
+        <header className="glass-panel rounded-3xl p-6">
+          <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Perfil</p>
+          <h1 className={`mt-2 text-3xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Atualize seus dados</h1>
+          <p className={`mt-1 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Foto de perfil e nome.</p>
         </header>
-        <div className="glass-panel rounded-3xl p-6 text-white">
+        <div className="glass-panel rounded-3xl p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               {avatar ? (
@@ -146,15 +148,17 @@ const ProfilePage = () => {
             </div>
           </div>
           <div className="mt-6 space-y-3">
-            <label className="block text-sm text-slate-200">
+            <label className={`block text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>
               Nome
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                className={`mt-1 w-full rounded-2xl border px-3 py-3 text-sm placeholder:text-slate-500 focus:border-primary focus:outline-none ${
+                  theme === 'light' ? 'border-slate-200 bg-white text-slate-900' : 'border-white/10 bg-white/5 text-white'
+                }`}
               />
             </label>
-            <p className="text-sm text-slate-400">E-mail: {user?.email}</p>
+            <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>E-mail: {user?.email}</p>
           </div>
           {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
           {info && <p className="mt-3 text-sm text-sky-200">{info}</p>}
@@ -169,9 +173,9 @@ const ProfilePage = () => {
         </div>
 
         {isAdmin && (
-          <div className="glass-panel rounded-3xl p-6 text-white">
+          <div className="glass-panel rounded-3xl p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Administração</h2>
+              <h2 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Administração</h2>
               <Button type="button" variant="secondary" onClick={loadUsers} disabled={adminLoading}>
                 {adminLoading ? 'Carregando...' : 'Listar usuários'}
               </Button>
