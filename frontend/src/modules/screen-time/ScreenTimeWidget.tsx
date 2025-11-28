@@ -189,7 +189,7 @@ const ScreenTimeWidget = () => {
             <select
               value={selectedBookId ?? ''}
               onChange={(event) => setSelectedBookId(event.target.value || null)}
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+              className="rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
             >
               <option value="">Selecione um livro</option>
               {books.map((book) => (
