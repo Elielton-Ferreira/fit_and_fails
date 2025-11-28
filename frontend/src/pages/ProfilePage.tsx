@@ -177,7 +177,7 @@ const ProfilePage = () => {
               </Button>
             </div>
             {adminError && <p className="mt-3 text-sm text-rose-300">{adminError}</p>}
-            <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-3 sm:items-end">
+            <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-4 sm:items-end">
               <div>
                 <p className="text-xs text-slate-400">Nome</p>
                 <input
@@ -197,20 +197,20 @@ const ProfilePage = () => {
                   type="email"
                 />
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <p className="text-xs text-slate-400">Senha</p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <input
-                    value={newUser.password}
-                    onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
-                    className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
-                    placeholder="Mínimo 6 caracteres"
-                    type="password"
-                  />
-                  <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={createUser}>
-                    Criar usuário
-                  </Button>
-                </div>
+                <input
+                  value={newUser.password}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
+                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                  placeholder="Mínimo 6 caracteres"
+                  type="password"
+                />
+              </div>
+              <div className="sm:pt-5">
+                <Button type="button" variant="secondary" className="w-full" onClick={createUser}>
+                  Criar usuário
+                </Button>
               </div>
             </div>
             <div className="mt-4 space-y-3">
