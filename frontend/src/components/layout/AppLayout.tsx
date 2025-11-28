@@ -7,7 +7,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => (
     <div className="lg:sticky lg:top-8 lg:self-start">
       <Sidebar />
     </div>
-    <main className="flex-1 pb-24 lg:pb-0 lg:pt-4">{children}</main>
+    <main className="flex-1 pb-24 lg:pb-0">{children}</main>
     <BottomNav />
   </div>
 )

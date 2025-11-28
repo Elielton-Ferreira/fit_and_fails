@@ -68,7 +68,7 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="glass-panel hidden w-64 flex-col rounded-3xl border border-white/10 p-6 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] lg:flex">
+    <aside className="glass-panel hidden w-64 flex-col rounded-3xl border border-white/10 p-6 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] lg:sticky lg:top-4 lg:flex">
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.4em] text-slate-400">Fit &amp; Fails</p>
         <h2 className="mt-2 text-2xl font-semibold leading-tight">
