@@ -266,16 +266,15 @@ const cropImage = async (
         <div className="rounded-3xl border border-white/12 bg-white/5 p-4">
           <p className={`text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>Foto ou vídeo opcional</p>
           <div className="mt-3 flex justify-center">
-            <div className="flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 px-4 py-4 text-center sm:px-5 sm:py-5">
-              <Button
+            <div className="flex w-full max-w-xs flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
+              <button
                 type="button"
-                variant="secondary"
-                className="w-full justify-center gap-2 rounded-xl px-4 py-2.5 sm:w-auto"
                 onClick={() => fileInputRef.current?.click()}
+                className="flex h-36 w-36 flex-col items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
               >
                 <IconCamera />
-                <span className={`font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Enviar foto/vídeo</span>
-              </Button>
+                <span className={theme === 'light' ? 'text-slate-900' : 'text-white'}>Enviar foto/vídeo</span>
+              </button>
               {mediaInfo && <p className={`text-xs ${theme === 'light' ? 'text-slate-600' : 'text-sky-200'}`}>{mediaInfo}</p>}
             </div>
           </div>
