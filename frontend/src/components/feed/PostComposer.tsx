@@ -1,6 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { useTheme } from '../../modules/theme/ThemeProvider'
+import { useAuth } from '../../modules/auth/AuthContext'
 import api from '../../lib/api'
 import Button from '../ui/Button'
 import { Post, PostType } from '../../types'
@@ -79,6 +80,7 @@ const IconCamera = () => (
 
 const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => void; onPublished?: () => void }) => {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const [type, setType] = useState<PostType>('healthy_food')
   const [text, setText] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -232,12 +234,21 @@ const cropImage = async (
       onSubmit={handleSubmit}
       className="glass-panel rounded-3xl border border-white/10 p-6 shadow-[0_16px_50px_rgba(0,0,0,0.4)]"
     >
-      <div className="flex flex-col gap-2">
-        <p className={`text-sm uppercase tracking-[0.3em] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Compartilhe</p>
-        <h3 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>O que rolou no seu dia?</h3>
-        <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-          Escolha o tipo do post, suba mídia opcional e publique direto no feed.
-        </p>
+      <div className="flex items-start gap-3">
+        {user?.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.name} className="h-12 w-12 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-lg font-bold uppercase text-white">
+            {user?.name?.slice(0, 1)}
+          </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <p className={`text-sm uppercase tracking-[0.3em] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Compartilhe</p>
+          <h3 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>O que rolou no seu dia?</h3>
+          <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+            {user?.name ? `${user.name}, ` : ''}escolha o tipo do post, suba mídia opcional e publique direto no feed.
+          </p>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
