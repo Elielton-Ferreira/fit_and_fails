@@ -6,6 +6,7 @@ const router = Router()
 
 router.use(authMiddleware)
 router.get('/', (req: Request, res: Response) => adminUserController.list(req, res))
+router.post('/', (req: Request, res: Response) => adminUserController.create(req, res))
 router.patch('/:userId/password', (req: Request, res: Response) => adminUserController.updatePassword(req, res))
 router.delete('/:userId', (req: Request, res: Response) => adminUserController.remove(req, res))
 

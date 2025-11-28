@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminError, setAdminError] = useState('')
   const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({})
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '' })
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -88,6 +89,28 @@ const ProfilePage = () => {
     }
   }
 
+  const createUser = async () => {
+    const { name: newName, email: newEmail, password: newPassword } = newUser
+    if (!newName || !newEmail || !newPassword) {
+      setAdminError('Preencha nome, email e senha.')
+      return
+    }
+    if (newPassword.length < 6) {
+      setAdminError('Senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+    try {
+      setAdminError('')
+      const { data } = await api.post('/admin/users', { name: newName, email: newEmail, password: newPassword })
+      setAdminUsers((prev) => [data, ...prev])
+      setNewUser({ name: '', email: '', password: '' })
+      setInfo('Usuário criado')
+      setTimeout(() => setInfo(''), 2000)
+    } catch (err: any) {
+      setAdminError(err.response?.data?.error || err.message)
+    }
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -154,6 +177,42 @@ const ProfilePage = () => {
               </Button>
             </div>
             {adminError && <p className="mt-3 text-sm text-rose-300">{adminError}</p>}
+            <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-3 sm:items-end">
+              <div>
+                <p className="text-xs text-slate-400">Nome</p>
+                <input
+                  value={newUser.name}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, name: e.target.value }))}
+                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                  placeholder="Nome"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">E-mail</p>
+                <input
+                  value={newUser.email}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))}
+                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                  placeholder="email@dominio.com"
+                  type="email"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <p className="text-xs text-slate-400">Senha</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    value={newUser.password}
+                    onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
+                    className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                    placeholder="Mínimo 6 caracteres"
+                    type="password"
+                  />
+                  <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={createUser}>
+                    Criar usuário
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="mt-4 space-y-3">
               {adminUsers.map((u) => (
                 <div key={u.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
