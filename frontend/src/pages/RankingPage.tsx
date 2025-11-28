@@ -2,20 +2,28 @@ import { useEffect, useState } from 'react'
 import AppLayout from '../components/layout/AppLayout'
 import { useAuth } from '../modules/auth/AuthContext'
 import api from '../lib/api'
-import { RankingEntry } from '../types'
+import { RankingEntry, WeeklyRankingResponse } from '../types'
 
 const RankingPage = () => {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [rows, setRows] = useState<RankingEntry[]>([])
   const [error, setError] = useState('')
   const [day, setDay] = useState(() => new Date().toISOString().substring(0, 10))
+  const [weekly, setWeekly] = useState<WeeklyRankingResponse | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
+        if (!token) {
+          setError('Faça login novamente para ver o ranking.')
+          return
+        }
+        api.defaults.headers.common.Authorization = `Bearer ${token}`
         setError('')
         const { data } = await api.get<RankingEntry[]>('/ranking', { params: { day } })
         setRows(data)
+        const weekData = await api.get<WeeklyRankingResponse>('/ranking/weekly', { params: { day } })
+        setWeekly(weekData.data)
       } catch (err: any) {
         setError(err.message)
       }
@@ -25,7 +33,7 @@ const RankingPage = () => {
 
   const renderBadge = (met: boolean, label: string) => (
     <span
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold ${
+      className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
         met ? 'bg-sky-500 text-white' : 'bg-rose-500 text-white'
       }`}
       title={label}
@@ -72,14 +80,50 @@ const RankingPage = () => {
                     <td className="px-3 py-2 font-semibold text-white">{row.name}</td>
                     <td className="px-3 py-2">{renderBadge(row.waterMet, `Meta ${row.waterTotal}/${row.waterGoal}ml`)}</td>
                     <td className="px-3 py-2">{renderBadge(row.exerciseDone, 'Treino registrado')}</td>
-                    <td className="px-3 py-2">-</td>
+                    <td className="px-3 py-2">{renderBadge(row.readingDone, 'Leitura registrada')}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+        </div>
+
+        {weekly && (
+          <div className="glass-panel rounded-3xl p-6 mt-4">
+            <p className="text-sm text-slate-400">Semana (início {weekly.start})</p>
+            <div className="overflow-x-auto mt-4">
+            <table className="min-w-full text-sm text-slate-200">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 text-left">Nome</th>
+                  {weekly.days.map((d) => (
+                    <th key={d} className="px-2 py-2 text-center">
+                      {new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {weekly.entries.map((entry) => (
+                  <tr key={entry.userId} className="border-t border-white/10">
+                    <td className="px-3 py-2 font-semibold text-white">{entry.name}</td>
+                    {entry.days.map((dayStat) => (
+                      <td key={dayStat.day} className="px-2 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1 text-xs">
+                          {renderBadge(dayStat.waterMet, 'Água')}
+                          {renderBadge(dayStat.exerciseDone, 'Exercício')}
+                          {renderBadge(dayStat.readingDone, 'Leitura')}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </AppLayout>
   )
 }
