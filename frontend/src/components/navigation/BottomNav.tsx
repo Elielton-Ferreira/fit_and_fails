@@ -57,24 +57,31 @@ const items = [
   { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
 
-const BottomNav = () => (
-  <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-white/10 bg-[rgba(7,9,18,0.92)] py-3 text-sm text-slate-200 backdrop-blur lg:hidden">
-    {items.map((item) => (
-      <NavLink
-        key={item.href}
-        to={item.href}
-        className={({ isActive }) =>
-          [
-            'flex flex-col items-center gap-1 rounded-xl px-2 text-xs font-medium transition',
-            isActive ? 'text-white drop-shadow-[0_6px_22px_rgba(63,124,255,0.45)]' : 'text-slate-300 hover:text-white'
-          ].join(' ')
-        }
-      >
-        <span className="text-lg">{item.icon}</span>
-        {item.label}
-      </NavLink>
-    ))}
-  </nav>
-)
+const BottomNav = () => {
+  const handleClick = (href: string) => {
+    if (href === '/dashboard') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-white/10 bg-[rgba(7,9,18,0.92)] py-3 text-sm text-slate-200 backdrop-blur lg:hidden">
+      {items.map((item) => (
+        <NavLink
+          key={item.href}
+          to={item.href}
+          onClick={() => handleClick(item.href)}
+          className={({ isActive }) =>
+            [
+              'flex flex-col items-center gap-1 rounded-xl px-2 text-xs font-medium transition',
+              isActive ? 'text-white drop-shadow-[0_6px_22px_rgba(63,124,255,0.45)]' : 'text-slate-300 hover:text-white'
+            ].join(' ')
+          }
+        >
+          <span className="text-lg">{item.icon}</span>
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+  )
+}
 
 export default BottomNav

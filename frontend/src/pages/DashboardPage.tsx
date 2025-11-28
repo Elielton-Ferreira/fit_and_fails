@@ -19,18 +19,6 @@ const DashboardPage = () => {
   return (
     <AppLayout>
       <div className="space-y-4 lg:pt-2">
-        {/* Título sticky com logo */}
-        <header
-          className={`sticky top-0 z-30 mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-3xl border p-6 backdrop-blur cursor-pointer ${headerStyles}`}
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          <div>
-            <p className={`text-sm ${mutedText}`}>Compartilhe o que rolou</p>
-            <h1 className="mt-1 text-3xl font-semibold">Feed Fit &amp; Fails</h1>
-            <p className={`mt-1 text-sm ${subText}`}>Compartilhe e acompanhe os posts da comunidade.</p>
-          </div>
-        </header>
-
         <Feed />
       </div>
     </AppLayout>

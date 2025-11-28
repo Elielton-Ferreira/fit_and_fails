@@ -63,6 +63,10 @@ const Sidebar = () => {
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
 
+  const handleNavClick = (href: string) => {
+    if (href === '/dashboard') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <aside className="glass-panel hidden w-64 flex-col rounded-3xl border border-white/10 p-6 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] lg:flex">
       <div className="mb-6">
@@ -91,6 +95,7 @@ const Sidebar = () => {
                   : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
               ].join(' ')
             }
+            onClick={() => handleNavClick(item.href)}
           >
             <span className="text-lg">{item.icon}</span>
             {item.label}
