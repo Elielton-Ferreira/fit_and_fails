@@ -268,21 +268,20 @@ const cropImage = async (
           onChange={(event) => setText(event.target.value)}
           placeholder="Escreva algo digno do feed..."
           className={[
-            'min-h-[120px] w-full rounded-2xl border px-4 py-3 text-sm placeholder:text-slate-500 focus:border-primary focus:outline-none',
+            'min-h-[70px] w-full rounded-2xl border px-4 py-3 text-sm placeholder:text-slate-500 focus:border-primary focus:outline-none',
             theme === 'light' ? 'border-slate-200 bg-white text-slate-900' : 'border-white/12 bg-white/5 text-white'
           ].join(' ')}
         />
 
         <div className="rounded-3xl border border-white/12 bg-white/5 p-3">
           <div className="flex justify-center">
-            <div className="flex w-full max-w-[220px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-3 text-center">
+            <div className="flex w-full max-w-md flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                className="flex h-24 w-24 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
               >
                 <IconCamera />
-                <span className={theme === 'light' ? 'text-slate-900' : 'text-white'}>Enviar foto/vídeo</span>
               </button>
               {mediaInfo && <p className={`text-xs ${theme === 'light' ? 'text-slate-600' : 'text-sky-200'}`}>{mediaInfo}</p>}
             </div>
