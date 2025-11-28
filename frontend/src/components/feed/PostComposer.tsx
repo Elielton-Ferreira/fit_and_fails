@@ -264,8 +264,8 @@ const cropImage = async (
 
       <div className="mt-5 grid gap-3">
         <div className="rounded-3xl border border-white/12 bg-white/5 p-4">
-          <p className={`text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>Foto ou vídeo opcional</p>
-          <div className="mt-3 flex justify-center">
+          <p className={`mb-3 text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>Foto ou vídeo opcional</p>
+          <div className="flex justify-center">
             <div className="flex w-full max-w-xs flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
               <button
                 type="button"
