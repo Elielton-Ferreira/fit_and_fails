@@ -105,3 +105,14 @@ export type BookLog = {
   date: string
   book: Book
 }
+
+export type RankingEntry = {
+  userId: string
+  name: string
+  email: string
+  date: string
+  waterTotal: number
+  waterGoal: number
+  waterMet: boolean
+  exerciseDone: boolean
+}

@@ -14,6 +14,7 @@ import exerciseRoutes from './routes/exercises'
 import profileRoutes from './routes/profile'
 import adminUserRoutes from './routes/adminUsers'
 import bookRoutes from './routes/books'
+import rankingRoutes from './routes/ranking'
 
 const PORT = process.env.PORT || 4000
 
@@ -51,6 +52,7 @@ app.use('/api/exercises', exerciseRoutes)
 app.use('/api', profileRoutes)
 app.use('/api/admin/users', adminUserRoutes)
 app.use('/api/books', bookRoutes)
+app.use('/api/ranking', rankingRoutes)
 
 app.get('/', (req, res) => res.json({ status: 'ok', name: 'Fit & Fails API' }))
 
