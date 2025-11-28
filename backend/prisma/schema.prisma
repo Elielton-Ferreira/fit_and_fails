@@ -18,6 +18,8 @@ model User {
   waterLogs    WaterLog[]
   screenLogs   ScreenTimeLog[]
   exercises    ExerciseSession[]
+  books        Book[]
+  bookLogs     BookLog[]
   likes        Like[]
   comments     Comment[]
   createdAt    DateTime  @default(now())

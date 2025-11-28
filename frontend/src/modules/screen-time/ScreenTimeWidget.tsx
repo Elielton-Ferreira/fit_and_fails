@@ -23,6 +23,7 @@ const ScreenTimeWidget = () => {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null)
   const [pagesRead, setPagesRead] = useState<number>(0)
   const [date, setDate] = useState(() => todayLocal())
+  const [showBookForm, setShowBookForm] = useState(false)
 
   const loadData = async () => {
     try {
@@ -149,28 +150,37 @@ const ScreenTimeWidget = () => {
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-sm text-slate-300">Cadastrar livro</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <input
-              value={form.title}
-              onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-              placeholder="Nome do Livro"
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
-            />
-            <input
-              type="number"
-              min={0}
-              value={form.totalPages}
-              onChange={(event) => setForm((prev) => ({ ...prev, totalPages: event.target.value }))}
-              placeholder="Total de páginas"
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
-            />
-          </div>
-          <div className="mt-3 flex gap-3">
-            <Button type="button" onClick={handleSaveBook} disabled={loading}>
-              Salvar livro
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-300">Cadastrar livro</p>
+            <Button type="button" variant="secondary" className="px-3 py-1 text-xs" onClick={() => setShowBookForm((prev) => !prev)}>
+              {showBookForm ? 'Fechar' : 'Novo livro'}
             </Button>
           </div>
+          {showBookForm && (
+            <div className="mt-3 grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  value={form.title}
+                  onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="Nome do Livro"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={form.totalPages}
+                  onChange={(event) => setForm((prev) => ({ ...prev, totalPages: event.target.value }))}
+                  placeholder="Total de páginas"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button type="button" onClick={handleSaveBook} disabled={loading}>
+                  Salvar livro
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -219,7 +229,9 @@ const ScreenTimeWidget = () => {
             <div key={book.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
               <div>
                 <p className="font-semibold">{book.title}</p>
-                <p className="text-xs text-slate-400">{book.totalPages ? `${book.totalPages} páginas` : 'Total não informado'}</p>
+                <p className="text-xs text-slate-400">
+                  {book.totalPages ? `${book.totalPages} páginas no total` : 'Total não informado'}
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="secondary" className="px-3 py-1 text-xs" onClick={() => handleEditBook(book)}>
