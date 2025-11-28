@@ -263,14 +263,23 @@ const cropImage = async (
       </div>
 
       <div className="mt-5 grid gap-3">
-        <div className="rounded-3xl border border-white/12 bg-white/5 p-4">
-          <p className={`mb-3 text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>Foto ou vídeo opcional</p>
+        <textarea
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder="Escreva algo digno do feed..."
+          className={[
+            'min-h-[120px] w-full rounded-2xl border px-4 py-3 text-sm placeholder:text-slate-500 focus:border-primary focus:outline-none',
+            theme === 'light' ? 'border-slate-200 bg-white text-slate-900' : 'border-white/12 bg-white/5 text-white'
+          ].join(' ')}
+        />
+
+        <div className="rounded-3xl border border-white/12 bg-white/5 p-3">
           <div className="flex justify-center">
-            <div className="flex w-full max-w-xs flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
+            <div className="flex w-full max-w-[220px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-3 text-center">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-36 w-36 flex-col items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
               >
                 <IconCamera />
                 <span className={theme === 'light' ? 'text-slate-900' : 'text-white'}>Enviar foto/vídeo</span>
@@ -369,12 +378,6 @@ const cropImage = async (
         </div>
       </div>
 
-      <textarea
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        placeholder="Escreva algo digno do feed..."
-        className="mt-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-sky-200/80 focus:outline-none focus:ring focus:ring-sky-200/10"
-      />
       {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
       <div className="mt-4 flex justify-end">
         <Button type="submit" disabled={loading} className="w-full lg:w-auto">
