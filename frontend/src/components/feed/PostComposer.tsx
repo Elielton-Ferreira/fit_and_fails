@@ -60,8 +60,8 @@ const postTypes: { value: PostType; label: string; icon: JSX.Element }[] = [
 
 const IconCamera = () => (
   <svg
-    width="80"
-    height="80"
+    width="64"
+    height="64"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -266,11 +266,11 @@ const cropImage = async (
         <div className="rounded-3xl border border-white/12 bg-white/5 p-4">
           <p className={`text-sm ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>Foto ou vídeo opcional</p>
           <div className="mt-3 flex justify-center">
-            <div className="flex w-full max-w-md flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-black/20 p-6 text-center sm:p-7">
+            <div className="flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 px-4 py-4 text-center sm:px-5 sm:py-5">
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full justify-center gap-3 rounded-xl px-4 py-3 sm:w-auto"
+                className="w-full justify-center gap-2 rounded-xl px-4 py-2.5 sm:w-auto"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <IconCamera />
