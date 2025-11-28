@@ -12,7 +12,7 @@ dayjs.locale('pt-br')
 
 const typeLabels: Record<Post['type'], { label: string; variant: 'success' | 'warn' | 'info'; emoji: string }> = {
   water: { label: 'Hidratação', variant: 'info', emoji: '💧' },
-  screen_time: { label: 'Tempo de tela', variant: 'warn', emoji: '⌛' },
+  screen_time: { label: 'Leitura', variant: 'warn', emoji: '🤓' },
   exercise: { label: 'Exercício', variant: 'success', emoji: '💪' },
   shame: { label: 'Post da vergonha', variant: 'warn', emoji: '🙈' },
   healthy_food: { label: 'Refeição Fit', variant: 'success', emoji: '🥗' }
