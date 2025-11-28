@@ -5,6 +5,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import { Post } from '../../types'
+import { useTheme } from '../../modules/theme/ThemeProvider'
 
 dayjs.extend(relativeTime)
 dayjs.locale('pt-br')
@@ -34,6 +35,8 @@ const PostCard = ({
   isOwner?: boolean
   currentUserId?: string
 }) => {
+  const { theme } = useTheme()
+  const isLight = theme === 'light'
   const meta = typeLabels[post.type]
   const [comment, setComment] = useState('')
   const [commentError, setCommentError] = useState('')
@@ -65,19 +68,31 @@ const PostCard = ({
   }
 
   return (
-    <article className="glass-panel rounded-3xl border border-white/10 bg-white/5 text-slate-100 shadow-[0_16px_50px_rgba(0,0,0,0.4)]">
+    <article
+      className={[
+        'glass-panel rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.4)]',
+        isLight ? 'border border-slate-200 bg-white text-slate-900' : 'border border-white/10 bg-white/5 text-slate-100'
+      ].join(' ')}
+    >
       <header className="flex items-center justify-between gap-3 px-5 py-4">
         <div className="flex items-center gap-3">
           {post.user.avatarUrl ? (
             <img src={post.user.avatarUrl} alt={post.user.name} className="h-10 w-10 rounded-full object-cover" />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-300 text-sm font-bold text-slate-900">
+            <div
+              className={[
+                'flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold',
+                isLight
+                  ? 'bg-gradient-to-br from-sky-200 to-blue-200 text-slate-900'
+                  : 'bg-gradient-to-br from-sky-400 to-blue-300 text-slate-900'
+              ].join(' ')}
+            >
               {post.user.name.slice(0, 1).toUpperCase()}
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold text-white">{post.user.name}</p>
-            <p className="text-xs text-slate-400">{dayjs(post.createdAt).fromNow()}</p>
+            <p className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{post.user.name}</p>
+            <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{dayjs(post.createdAt).fromNow()}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -86,7 +101,12 @@ const PostCard = ({
             <button
               type="button"
               onClick={() => onDelete(post.id)}
-              className="rounded-full border border-rose-400/40 px-3 py-1 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10"
+              className={[
+                'rounded-full px-3 py-1 text-xs font-semibold transition',
+                isLight
+                  ? 'border border-rose-200 text-rose-600 hover:bg-rose-50'
+                  : 'border border-rose-400/40 text-rose-200 hover:bg-rose-500/10'
+              ].join(' ')}
             >
               Excluir
             </button>
@@ -102,15 +122,20 @@ const PostCard = ({
 
       <div className="px-5 py-4">
         {post.badgeType && (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-200 drop-shadow-[0_2px_8px_rgba(63,124,255,0.55)]">
+          <p
+            className={[
+              'mb-2 text-xs font-semibold uppercase tracking-wide',
+              isLight ? 'text-sky-700' : 'text-sky-200 drop-shadow-[0_2px_8px_rgba(63,124,255,0.55)]'
+            ].join(' ')}
+          >
             🏅 {post.badgeType.replace(/_/g, ' ')}
           </p>
         )}
-        {post.text && <p className="text-sm leading-relaxed text-slate-100">{post.text}</p>}
+        {post.text && <p className={`text-sm leading-relaxed ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>{post.text}</p>}
       </div>
 
-      <div className="border-t border-white/5 px-5 py-3">
-        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+      <div className={['px-5 py-3', isLight ? 'border-t border-slate-200' : 'border-t border-white/5'].join(' ')}>
+        <div className={`flex flex-wrap items-center gap-3 text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
           <button
             type="button"
             onClick={() => onToggleLike(post.id, post.likes.likedByViewer)}
@@ -121,7 +146,7 @@ const PostCard = ({
           </button>
           <span>{post.likes.total} curtidas</span>
           {post.likes.people && post.likes.people.length > 0 && (
-            <span className="text-xs text-slate-400">
+            <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Curtido por {post.likes.people[0].name}
               {post.likes.people.length > 1 && ` e +${post.likes.people.length - 1}`}
             </span>
@@ -134,15 +159,15 @@ const PostCard = ({
         {visibleComments.map((item) => (
           <div key={item.id} className="mb-3 flex items-start justify-between gap-3">
             <div className="flex-1">
-              <span className="text-sm font-semibold text-white">{item.user.name}</span>{' '}
-              <span className="text-sm text-slate-200">{item.text}</span>
-              <span className="ml-2 text-xs text-slate-500">{dayjs(item.createdAt).fromNow()}</span>
+              <span className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.user.name}</span>{' '}
+              <span className={`text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{item.text}</span>
+              <span className={`ml-2 text-xs ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>{dayjs(item.createdAt).fromNow()}</span>
             </div>
             {currentUserId === item.user.id && (
               <button
                 type="button"
                 onClick={() => onDeleteComment(post.id, item.id)}
-                className="text-xs font-semibold text-rose-200 hover:underline"
+                className={`text-xs font-semibold hover:underline ${isLight ? 'text-rose-600' : 'text-rose-200'}`}
               >
                 Excluir
               </button>
@@ -152,13 +177,21 @@ const PostCard = ({
         {post.comments.total > visibleComments.length && (
           <p className="text-sm font-medium text-slate-400">Ver todos os {post.comments.total} comentários</p>
         )}
-        <div className="mt-4 flex flex-col items-stretch gap-3 border-t border-white/5 pt-3 sm:flex-row">
+        <div
+          className={[
+            'mt-4 flex flex-col items-stretch gap-3 pt-3 sm:flex-row',
+            isLight ? 'border-t border-slate-200' : 'border-t border-white/5'
+          ].join(' ')}
+        >
           <input
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             placeholder="Adicione um comentário..."
             onKeyDown={handleCommentKey}
-            className="flex-1 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-slate-500 focus:border-sky-200/80 focus:outline-none focus:ring focus:ring-sky-200/10"
+            className={[
+              'flex-1 rounded-full px-4 py-2 text-sm placeholder:text-slate-500 focus:border-sky-200/80 focus:outline-none focus:ring focus:ring-sky-200/10',
+              isLight ? 'border border-slate-200 bg-white text-slate-900' : 'border border-white/12 bg-white/5 text-white'
+            ].join(' ')}
           />
           <Button type="button" variant="secondary" onClick={submitComment} disabled={sendingComment} className="whitespace-nowrap px-5">
             {sendingComment ? 'Enviando...' : 'Comentar'}
