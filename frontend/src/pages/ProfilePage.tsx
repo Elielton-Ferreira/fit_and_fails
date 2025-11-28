@@ -7,7 +7,7 @@ import { useTheme } from '../modules/theme/ThemeProvider'
 
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth()
-  const { theme } = useTheme()
+  const { theme, toggle } = useTheme()
   const [name, setName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null)
   const [info, setInfo] = useState('')
@@ -117,9 +117,20 @@ const ProfilePage = () => {
     <AppLayout>
       <div className="space-y-6">
         <header className="glass-panel rounded-3xl p-6">
-          <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Perfil</p>
-          <h1 className={`mt-2 text-3xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Atualize seus dados</h1>
-          <p className={`mt-1 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Foto de perfil e nome.</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Perfil</p>
+              <h1 className={`mt-2 text-3xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Atualize seus dados</h1>
+              <p className={`mt-1 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Foto de perfil e nome.</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggle}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-sky-200/60 hover:bg-white/10"
+            >
+              {theme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro'}
+            </button>
+          </div>
         </header>
         <div className="glass-panel rounded-3xl p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

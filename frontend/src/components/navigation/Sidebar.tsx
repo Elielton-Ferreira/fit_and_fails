@@ -61,7 +61,7 @@ const navItems = [
 
 const Sidebar = () => {
   const { user, logout } = useAuth()
-  const { theme, toggle } = useTheme()
+  const { theme } = useTheme()
   const brandPrimary = theme === 'light' ? 'text-slate-900' : 'text-slate-100'
   const brandAccent = theme === 'light' ? 'text-sky-600' : 'text-sky-300'
 
@@ -77,13 +77,6 @@ const Sidebar = () => {
           Disciplina com <span className={brandAccent}>humor</span>
         </h2>
       </div>
-      <button
-        type="button"
-        onClick={toggle}
-        className="mb-6 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-sky-200/60 hover:bg-white/10"
-      >
-        {theme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro'}
-      </button>
       <nav className="mb-4 flex flex-col gap-2">
         {navItems.map((item) => (
           <NavLink
