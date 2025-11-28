@@ -18,6 +18,8 @@ const ExerciseWidget = () => {
   const [mediaError, setMediaError] = useState('')
   const [mediaLabel, setMediaLabel] = useState('')
   const durationPresets = [15, 30, 45, 60]
+  const [showTypeForm, setShowTypeForm] = useState(false)
+  const [monthOffset, setMonthOffset] = useState(0)
 
   const fetchSessions = useCallback(async () => {
     const { data } = await api.get('/exercises', { params: { limit: 6, days: 60 } })
@@ -84,6 +86,7 @@ const ExerciseWidget = () => {
     }
     setType(next)
     setCustomType('')
+    setShowTypeForm(false)
   }
 
   const loadCustomTypes = (): string[] => {
@@ -107,12 +110,21 @@ const ExerciseWidget = () => {
     }
   }
 
-  const calendarDays = Array.from({ length: 21 }).map((_, idx) => {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() - idx)
-    return d
-  }).reverse()
+  const buildMonthDays = () => {
+    const base = new Date()
+    base.setDate(1)
+    base.setMonth(base.getMonth() + monthOffset)
+    const startWeek = base.getDay()
+    const daysInMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate()
+    const days: (Date | null)[] = []
+    for (let i = 0; i < startWeek; i++) days.push(null)
+    for (let d = 1; d <= daysInMonth; d++) {
+      days.push(new Date(base.getFullYear(), base.getMonth(), d))
+    }
+    return days
+  }
+
+  const calendarDays = buildMonthDays()
 
   const historyByDay = history.reduce<Record<string, ExerciseSession[]>>((acc, session) => {
     const key = new Date(session.startTime).toISOString().substring(0, 10)
@@ -145,14 +157,21 @@ const ExerciseWidget = () => {
               ))}
             </select>
             <div className="flex flex-col gap-2">
-              <input
-                value={customType}
-                onChange={(event) => setCustomType(event.target.value)}
-                placeholder="Novo tipo (ex.: Yoga, Cross, Corrida)"
-                className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
-              />
-              <Button type="button" variant="secondary" className="w-full px-3 py-2 text-xs whitespace-nowrap" onClick={addCustomType}>
-                + Tipo
+              {showTypeForm && (
+                <input
+                  value={customType}
+                  onChange={(event) => setCustomType(event.target.value)}
+                  placeholder="Novo tipo (ex.: Yoga, Cross, Corrida)"
+                  className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
+                />
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full px-3 py-2 text-xs whitespace-nowrap"
+                onClick={() => (showTypeForm ? addCustomType() : setShowTypeForm(true))}
+              >
+                {showTypeForm ? 'Salvar tipo' : '+ Tipo'}
               </Button>
             </div>
           </div>
@@ -183,24 +202,22 @@ const ExerciseWidget = () => {
             />
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white">
-            <p className="text-xs text-slate-400">Foto / vídeo do treino</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button
+            <p className="text-xs text-slate-400">Foto do treino</p>
+            <div className="mt-3 flex justify-center">
+              <button
                 type="button"
-                variant="secondary"
-                className="flex items-center justify-center gap-2 px-4 py-3 text-sm border border-white/30 bg-white/20 text-white hover:bg-white/30 transition w-full sm:w-auto"
                 onClick={() => fileInputRef.current?.click()}
+                className="flex h-24 w-24 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
               >
                 <IconCamera />
-                Enviar foto/vídeo
-              </Button>
-              {mediaLabel && <span className="text-xs text-sky-200">{mediaLabel}</span>}
+              </button>
             </div>
+            {mediaLabel && <p className="mt-2 text-xs text-sky-200 text-center">{mediaLabel}</p>}
             {mediaError && <p className="mt-2 text-xs text-rose-300">{mediaError}</p>}
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*"
               capture="environment"
               className="hidden"
               onChange={handleFileChange}
@@ -226,12 +243,29 @@ const ExerciseWidget = () => {
       </form>
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-sm font-semibold text-white">Calendário (últimos 21 dias)</p>
-        <div className="mt-3 grid grid-cols-7 gap-2">
-          {calendarDays.map((day) => {
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-semibold text-white">Calendário de treinos</p>
+          <div className="flex gap-2 text-xs">
+            <Button type="button" variant="ghost" className="px-3 py-1" onClick={() => setMonthOffset((m) => m - 1)}>
+              ◀ Mês anterior
+            </Button>
+            <Button type="button" variant="ghost" className="px-3 py-1" onClick={() => setMonthOffset((m) => m + 1)}>
+              Próximo mês ▶
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-400 mb-2">
+          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-2">
+          {calendarDays.map((day, idx) => {
+            if (!day) return <div key={`empty-${idx}`} />
             const key = day.toISOString().substring(0, 10)
             const hasWorkout = Boolean(historyByDay[key])
             const count = historyByDay[key]?.length ?? 0
+            const isToday = new Date().toISOString().substring(0, 10) === key
             return (
               <div
                 key={key}
@@ -239,12 +273,12 @@ const ExerciseWidget = () => {
                   'flex h-10 flex-col items-center justify-center rounded-lg border text-xs transition',
                   hasWorkout
                     ? 'border-sky-300/60 bg-sky-400/20 text-sky-100'
-                    : 'border-white/10 bg-white/5 text-slate-400'
+                    : 'border-white/10 bg-white/5 text-slate-400',
+                  isToday ? 'ring-2 ring-sky-300/80' : ''
                 ].join(' ')}
                 title={hasWorkout ? `${count} treino(s)` : 'Sem treino'}
               >
                 <span>{day.getDate()}</span>
-                <span className="text-[10px]">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'][day.getDay()]}</span>
               </div>
             )
           })}

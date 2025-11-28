@@ -147,8 +147,7 @@ const PostCard = ({
           <span>{post.likes.total} curtidas</span>
           {post.likes.people && post.likes.people.length > 0 && (
             <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              Curtido por {post.likes.people[0].name}
-              {post.likes.people.length > 1 && ` e +${post.likes.people.length - 1}`}
+              Curtido por {post.likes.people.map((p) => p.name).join(', ')}
             </span>
           )}
           <span>{post.comments.total} comentários</span>
@@ -156,7 +155,7 @@ const PostCard = ({
       </div>
 
       <div className="px-5 py-4">
-        {visibleComments.map((item) => (
+        {post.comments.items.map((item) => (
           <div key={item.id} className="mb-3 flex items-start justify-between gap-3">
             <div className="flex-1">
               <span className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.user.name}</span>{' '}
@@ -193,7 +192,13 @@ const PostCard = ({
               isLight ? 'border border-slate-200 bg-white text-slate-900' : 'border border-white/12 bg-white/5 text-white'
             ].join(' ')}
           />
-          <Button type="button" variant="secondary" onClick={submitComment} disabled={sendingComment} className="whitespace-nowrap px-5">
+          <Button
+            type="button"
+            variant={comment.trim() ? 'primary' : 'secondary'}
+            onClick={submitComment}
+            disabled={sendingComment}
+            className="whitespace-nowrap px-5"
+          >
             {sendingComment ? 'Enviando...' : 'Comentar'}
           </Button>
         </div>

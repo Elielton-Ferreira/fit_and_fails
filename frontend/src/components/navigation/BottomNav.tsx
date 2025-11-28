@@ -15,6 +15,16 @@ const IconCreate = () => (
   </svg>
 )
 
+const IconTrophy = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 21h8" />
+    <path d="M12 17v4" />
+    <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+    <path d="M5 4h2v2a2 2 0 0 1-2-2Z" />
+    <path d="M17 4h2a2 2 0 0 1-2 2V4Z" />
+  </svg>
+)
+
 const IconWater = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3s-5 6-5 10a5 5 0 0 0 10 0c0-4-5-10-5-10Z" />
@@ -50,7 +60,7 @@ const IconProfile = () => (
 
 const items = [
   { label: 'Feed', href: '/dashboard', icon: <IconFeed /> },
-  { label: 'Criar', href: '/create', icon: <IconCreate /> },
+  { label: 'Ranking', href: '/ranking', icon: <IconTrophy /> },
   { label: 'Água', href: '/water', icon: <IconWater /> },
   { label: 'Livros', href: '/book', icon: <IconBook /> },
   { label: 'Treino', href: '/exercise', icon: <IconDumbbell /> },

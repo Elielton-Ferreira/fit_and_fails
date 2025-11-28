@@ -6,7 +6,7 @@ import WaterPage from './pages/WaterPage'
 import ScreenTimePage from './pages/ScreenTimePage'
 import ExercisePage from './pages/ExercisePage'
 import ProfilePage from './pages/ProfilePage'
-import CreatePostPage from './pages/CreatePostPage'
+import RankingPage from './pages/RankingPage'
 import { useAuth } from './modules/auth/AuthContext'
 
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
@@ -65,10 +65,10 @@ const App = () => {
         }
       />
       <Route
-        path="/create"
+        path="/ranking"
         element={
           <RequireAuth>
-            <CreatePostPage />
+            <RankingPage />
           </RequireAuth>
         }
       />
