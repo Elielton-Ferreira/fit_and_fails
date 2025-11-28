@@ -163,23 +163,6 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
     setMediaInfo('')
   }
 
-  const startDrag = (point: { x: number; y: number }) => {
-    dragging.current = true
-    lastPos.current = { x: point.x, y: point.y }
-  }
-
-  const moveDrag = (point: { x: number; y: number }) => {
-    if (!dragging.current) return
-    const dx = point.x - lastPos.current.x
-    const dy = point.y - lastPos.current.y
-    setImageOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
-    lastPos.current = { x: point.x, y: point.y }
-  }
-
-  const onDragEnd = () => {
-    dragging.current = false
-  }
-
   useEffect(() => {
     const updateSize = () => {
       if (!previewRef.current) return
@@ -307,24 +290,7 @@ const cropImage = async (
           />
           {imageUrl && (
             <div className="mt-4 space-y-3">
-              <div
-                className="relative h-72 w-full overflow-hidden rounded-2xl border border-white/10 bg-black/30"
-                onMouseDown={(event) => startDrag({ x: event.clientX, y: event.clientY })}
-                onMouseMove={(event) => moveDrag({ x: event.clientX, y: event.clientY })}
-                onMouseUp={onDragEnd}
-                onMouseLeave={onDragEnd}
-                onTouchStart={(event) => {
-                  const touch = event.touches[0]
-                  if (touch) startDrag({ x: touch.clientX, y: touch.clientY })
-                }}
-                onTouchMove={(event) => {
-                  const touch = event.touches[0]
-                  if (touch) moveDrag({ x: touch.clientX, y: touch.clientY })
-                }}
-                onTouchEnd={onDragEnd}
-                ref={previewRef}
-                role="presentation"
-              >
+              <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-white/10 bg-black/30" ref={previewRef} role="presentation">
                 <img
                   src={imageUrl}
                   alt="Pré-visualização"
@@ -332,7 +298,7 @@ const cropImage = async (
                   style={{
                     width: imageMeta ? imageMeta.width * baseScale : '100%',
                     height: imageMeta ? imageMeta.height * baseScale : '100%',
-                    transform: `translate(-50%, -50%) translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale})`,
+                    transform: `translate(-50%, -50%) scale(${imageScale})`,
                     objectFit: 'cover'
                   }}
                   draggable={false}

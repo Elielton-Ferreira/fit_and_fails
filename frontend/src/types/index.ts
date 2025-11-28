@@ -115,4 +115,25 @@ export type RankingEntry = {
   waterGoal: number
   waterMet: boolean
   exerciseDone: boolean
+  readingDone: boolean
+}
+
+export type WeeklyRankingDay = {
+  day: string
+  waterMet: boolean
+  exerciseDone: boolean
+  readingDone: boolean
+}
+
+export type WeeklyRankingEntry = {
+  userId: string
+  name: string
+  email: string
+  days: WeeklyRankingDay[]
+}
+
+export type WeeklyRankingResponse = {
+  start: string
+  days: string[]
+  entries: WeeklyRankingEntry[]
 }
