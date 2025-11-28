@@ -22,7 +22,7 @@ const App = () => {
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route
         path="/dashboard"
         element={

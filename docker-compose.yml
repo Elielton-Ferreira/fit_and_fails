@@ -4,7 +4,7 @@ services:
     image: postgres:15
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: fitandfails
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: fitandfails
     volumes:
@@ -19,10 +19,12 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/fitandfails
+      DATABASE_URL: postgres://fitandfails:postgres@db:5432/fitandfails
       JWT_SECRET: supersecret_jwt
       PORT: '4000'
       WATER_DEFAULT_GOAL: '2000'
+      # Allow local frontend origins for CORS during dockerized dev
+      FRONTEND_URL: http://localhost:3000,http://127.0.0.1:3000
     ports:
       - '4000:4000'
     volumes:

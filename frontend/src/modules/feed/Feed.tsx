@@ -32,7 +32,7 @@ const Feed = () => {
   const fetchPosts = useCallback(async (day?: string, mode: 'replace' | 'append' = 'replace') => {
     try {
       if (mode === 'append') setLoadingMore(true)
-      const { data } = await api.get<PostsByDayResponse>('/posts', { params: day ? { day } : undefined })
+      const { data } = await api.get<PostsByDayResponse>('/posts', { params: day ? { day } : { limit: 50 } })
       if (mode === 'replace') {
         setSections([{ day: data.day, posts: data.posts }])
       } else {
@@ -49,6 +49,13 @@ const Feed = () => {
 
   useEffect(() => {
     fetchPosts()
+  }, [fetchPosts])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPosts(undefined, 'replace')
+    }, 30000)
+    return () => clearInterval(interval)
   }, [fetchPosts])
 
   const handleNewPost = (post: Post) => {
@@ -113,7 +120,7 @@ const Feed = () => {
 
   return (
     <section id="feed" className="mx-auto max-w-3xl space-y-6">
-      <PostComposer onCreated={handleNewPost} />
+      <PostComposer onCreated={handleNewPost} onPublished={() => fetchPosts(undefined, 'replace')} />
       {error && <p className="text-sm text-rose-300">{error}</p>}
       {loading ? (
         <p className="text-sm text-slate-400">Carregando histórias...</p>

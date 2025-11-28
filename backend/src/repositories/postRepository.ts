@@ -1,7 +1,15 @@
 import { PostType } from '@prisma/client'
 import prisma from '../prisma'
 
-const findAll = async (filters?: { type?: PostType; start?: Date; end?: Date }) => {
+type FindAllFilters = {
+  type?: PostType
+  start?: Date
+  end?: Date
+  limit?: number
+  commentLimit?: number
+}
+
+const findAll = async (filters?: FindAllFilters) => {
   const where = {
     ...(filters?.type ? { type: filters.type } : {}),
     ...(filters?.start || filters?.end
@@ -13,6 +21,7 @@ const findAll = async (filters?: { type?: PostType; start?: Date; end?: Date }) 
         }
       : {})
   }
+
   return prisma.post.findMany({
     where,
     include: {
@@ -25,11 +34,13 @@ const findAll = async (filters?: { type?: PostType; start?: Date; end?: Date }) 
       },
       comments: {
         orderBy: { createdAt: 'desc' },
+        take: filters?.commentLimit ?? 5,
         include: { user: { select: { id: true, name: true, avatarUrl: true } } }
       },
       _count: { select: { likes: true, comments: true } }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: filters?.limit
   })
 }
 
@@ -37,7 +48,7 @@ const create = async (data: { userId: string; type: PostType; text?: string; ima
   return prisma.post.create({ data })
 }
 
-const findById = async (id: string) => {
+const findById = async (id: string, commentLimit = 5) => {
   return prisma.post.findUnique({
     where: { id },
     include: {
@@ -50,6 +61,7 @@ const findById = async (id: string) => {
       },
       comments: {
         orderBy: { createdAt: 'desc' },
+        take: commentLimit,
         include: { user: { select: { id: true, name: true, avatarUrl: true } } }
       },
       _count: { select: { likes: true, comments: true } }

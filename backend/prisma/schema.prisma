@@ -38,6 +38,7 @@ model Post {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model WaterLog {
@@ -84,6 +85,7 @@ model Like {
   userId String
 
   @@unique([postId, userId], name: "post_like_unique")
+  @@index([postId])
 }
 
 model Comment {

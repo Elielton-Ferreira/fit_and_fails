@@ -46,8 +46,12 @@ const mapPost = (post: PostWithRelations, viewerId?: string) => ({
   }
 })
 
-const getAll = async ({ type, viewerId, day }: { type?: string; viewerId?: string; day?: string } = {}) => {
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+const getAll = async ({ type, viewerId, day, limit }: { type?: string; viewerId?: string; day?: string; limit?: number } = {}) => {
   const normalizedType = type ? normalizeType(type) : undefined
+  const parsedLimit = limit ? clamp(Number(limit), 1, 100) : 50
+  const commentLimit = 5
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -59,7 +63,9 @@ const getAll = async ({ type, viewerId, day }: { type?: string; viewerId?: strin
   const posts = await postRepository.findAll({
     ...(normalizedType ? { type: normalizedType } : {}),
     start: baseDay,
-    end: nextDay
+    end: nextDay,
+    limit: parsedLimit,
+    commentLimit
   })
   const mapped = posts.map((post) => mapPost(post, viewerId))
 

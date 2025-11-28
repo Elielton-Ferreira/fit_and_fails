@@ -50,12 +50,7 @@ const LoginPage = () => {
             {loading ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
-        <p className="mt-6 text-center text-sm text-slate-400">
-          Ainda não tem conta?{' '}
-          <Link to="/register" className="text-primary hover:underline">
-            Criar conta
-          </Link>
-        </p>
+        <p className="mt-6 text-center text-sm text-slate-400">Acesso restrito. Fale com o administrador.</p>
       </div>
     </div>
   )
