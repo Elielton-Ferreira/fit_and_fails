@@ -4,6 +4,7 @@ import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Book, BookLog } from '../../types'
+import IconCamera from '../../components/icons/IconCamera'
 
 const todayLocal = () => {
   const now = new Date()
@@ -21,9 +22,13 @@ const ScreenTimeWidget = () => {
 
   const [form, setForm] = useState({ title: '', totalPages: '' })
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null)
-  const [pagesRead, setPagesRead] = useState<number>(0)
+  const [pagesRead, setPagesRead] = useState<string>('') // string para permitir vazio no mobile
   const [date, setDate] = useState(() => todayLocal())
   const [showBookForm, setShowBookForm] = useState(false)
+  const [mediaUrl, setMediaUrl] = useState('')
+  const [mediaLabel, setMediaLabel] = useState('')
+  const [mediaError, setMediaError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const loadData = async () => {
     try {
@@ -101,20 +106,36 @@ const ScreenTimeWidget = () => {
       setError('Escolha um livro para registrar.')
       return
     }
-    if (!pagesRead || pagesRead <= 0) {
+    const pages = Number(pagesRead)
+    if (!pages || pages <= 0 || Number.isNaN(pages)) {
       setError('Informe páginas lidas.')
       return
     }
     setLoading(true)
     try {
       const { data } = await api.post<BookLog>(`/books/${selectedBookId}/logs`, {
-        pages: pagesRead,
+        pages,
         date: `${date}T12:00:00`
       })
       setLogs((prev) => [data, ...prev])
-      setPagesRead(0)
+      setPagesRead('')
       setMessage('Leitura registrada 📚')
       setTimeout(() => setMessage(''), 1500)
+      // cria um post no feed com opcional de imagem
+      try {
+        const bookTitle = books.find((b) => b.id === selectedBookId)?.title ?? 'um livro'
+        await api.post('/posts', {
+          type: 'screen_time',
+          text: `Hoje li ${pages} páginas do livro "${bookTitle}"`,
+          imageUrl: mediaUrl || undefined
+        })
+      } catch (postErr: any) {
+        // apenas registra o erro na UI, mas não bloqueia o log
+        setError(postErr?.message || 'Não foi possível publicar no feed.')
+      }
+      setMediaUrl('')
+      setMediaLabel('')
+      setMediaError('')
       // redireciona para o feed
       navigate('/dashboard#feed')
     } catch (err: any) {
@@ -122,6 +143,22 @@ const ScreenTimeWidget = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setMediaError('Arquivo maior que 5MB. Selecione algo menor.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setMediaUrl(String(reader.result))
+      setMediaLabel(file.name)
+      setMediaError('')
+    }
+    reader.readAsDataURL(file)
   }
 
   const totalThisWeek = useMemo(() => {
@@ -209,15 +246,73 @@ const ScreenTimeWidget = () => {
                 type="number"
                 min={0}
                 value={pagesRead}
-                onChange={(event) => setPagesRead(Number(event.target.value))}
+                onChange={(event) => setPagesRead(event.target.value)}
                 className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
                 placeholder="Páginas lidas"
+              />
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white">
+              <p className="text-xs text-slate-300">Foto do momento de leitura</p>
+              <div className="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-24 w-24 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                >
+                  <IconCamera className="h-10 w-10 text-sky-200" />
+                </button>
+              </div>
+              {mediaUrl && (
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                    <img src={mediaUrl} alt="Prévia da leitura" className="h-40 w-40 object-cover" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaUrl('')
+                      setMediaLabel('')
+                    }}
+                    className="text-xs text-slate-300 underline"
+                  >
+                    remover
+                  </button>
+                </div>
+              )}
+              {mediaLabel && <p className="mt-2 text-xs text-sky-200 text-center">{mediaLabel}</p>}
+              {mediaError && <p className="mt-2 text-xs text-rose-300">{mediaError}</p>}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileChange}
               />
             </div>
             <Button type="button" onClick={handleLog} disabled={loading}>
               Registrar e publicar no feed
             </Button>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Histórico de registros</p>
+        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+          {logs.length === 0 && <p className="text-sm text-slate-400">Nenhum registro.</p>}
+          {logs.map((log) => {
+            const label = new Date(log.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+            return (
+              <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
+                <div className="flex flex-col">
+                  <span className="font-semibold">{log.book.title}</span>
+                  <span className="text-xs text-slate-400">{label}</span>
+                </div>
+                <span className="text-sm font-semibold text-white">{log.pages} págs</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -243,25 +338,6 @@ const ScreenTimeWidget = () => {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-sm font-semibold text-white">Histórico de registros</p>
-        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
-          {logs.length === 0 && <p className="text-sm text-slate-400">Nenhum registro.</p>}
-          {logs.map((log) => {
-            const label = new Date(log.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-            return (
-              <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
-                <div className="flex flex-col">
-                  <span className="font-semibold">{log.book.title}</span>
-                  <span className="text-xs text-slate-400">{label}</span>
-                </div>
-                <span className="text-sm font-semibold text-white">{log.pages} págs</span>
-              </div>
-            )
-          })}
         </div>
       </div>
     </section>
