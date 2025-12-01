@@ -1,10 +1,14 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import { ExerciseSession } from '../../types'
+import { useTheme } from '../theme/ThemeProvider'
 
 const ExerciseWidget = () => {
+  const navigate = useNavigate()
+  const { theme } = useTheme()
   const [type, setType] = useState('Caminhada')
   const [duration, setDuration] = useState(30)
   const [notes, setNotes] = useState('')
@@ -20,6 +24,7 @@ const ExerciseWidget = () => {
   const durationPresets = [15, 30, 45, 60]
   const [showTypeForm, setShowTypeForm] = useState(false)
   const [monthOffset, setMonthOffset] = useState(0)
+  const [loading, setLoading] = useState(false)
 
   const fetchSessions = useCallback(async () => {
     const { data } = await api.get('/exercises', { params: { limit: 6, days: 60 } })
@@ -39,6 +44,7 @@ const ExerciseWidget = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (loading) return
     const startTime = new Date()
     const endTime = new Date(startTime.getTime() + duration * 60000)
     const payload = {
@@ -49,11 +55,19 @@ const ExerciseWidget = () => {
       mediaUrls: mediaUrl ? [mediaUrl] : undefined,
       shareToFeed: share
     }
-    const { data } = await api.post('/exercises', payload)
-    setSessions((prev) => [data, ...prev].slice(0, 4))
-    setNotes('')
-    setMediaUrl('')
-    setMediaLabel('')
+    try {
+      setLoading(true)
+      const { data } = await api.post('/exercises', payload)
+      setSessions((prev) => [data, ...prev].slice(0, 4))
+      setHistory((prev) => [data, ...prev])
+      setNotes('')
+      setMediaUrl('')
+      setMediaLabel('')
+      // direciona ao feed como na tela de livros
+      navigate('/dashboard#feed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -126,11 +140,20 @@ const ExerciseWidget = () => {
 
   const calendarDays = buildMonthDays()
 
+  const toLocalKey = (date: string | Date) => {
+    const d = new Date(date)
+    const offset = d.getTimezoneOffset()
+    const local = new Date(d.getTime() - offset * 60000)
+    return local.toISOString().substring(0, 10)
+  }
+
   const historyByDay = history.reduce<Record<string, ExerciseSession[]>>((acc, session) => {
-    const key = new Date(session.startTime).toISOString().substring(0, 10)
+    const key = toLocalKey(session.startTime)
     acc[key] = acc[key] ? [...acc[key], session] : [session]
     return acc
   }, {})
+
+  const todayKey = toLocalKey(new Date())
 
   return (
     <section id="exercise" className="glass-panel rounded-3xl p-6">
@@ -212,6 +235,23 @@ const ExerciseWidget = () => {
                 <IconCamera />
               </button>
             </div>
+            {mediaUrl && (
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                  <img src={mediaUrl} alt="Prévia do treino" className="h-40 w-40 object-cover" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMediaUrl('')
+                    setMediaLabel('')
+                  }}
+                  className="text-xs text-slate-300 underline"
+                >
+                  remover
+                </button>
+              </div>
+            )}
             {mediaLabel && <p className="mt-2 text-xs text-sky-200 text-center">{mediaLabel}</p>}
             {mediaError && <p className="mt-2 text-xs text-rose-300">{mediaError}</p>}
             <input
@@ -229,15 +269,15 @@ const ExerciseWidget = () => {
           </label>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[2fr,1fr]">
+        <div className="grid gap-3 lg:grid-cols-[2fr,1fr] items-start">
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Notas rápidas"
             className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none"
           />
-          <Button type="submit" className="w-full lg:w-auto">
-            Registrar treino
+          <Button type="submit" className="w-full lg:w-auto" disabled={loading}>
+            {loading ? 'Registrando...' : 'Registrar treino'}
           </Button>
         </div>
       </form>
@@ -262,19 +302,28 @@ const ExerciseWidget = () => {
         <div className="grid grid-cols-7 gap-2">
           {calendarDays.map((day, idx) => {
             if (!day) return <div key={`empty-${idx}`} />
-            const key = day.toISOString().substring(0, 10)
-            const hasWorkout = Boolean(historyByDay[key])
-            const count = historyByDay[key]?.length ?? 0
-            const isToday = new Date().toISOString().substring(0, 10) === key
+            const keyLocal = toLocalKey(day)
+            const hasWorkout = Boolean(historyByDay[keyLocal])
+            const count = historyByDay[keyLocal]?.length ?? 0
+            const isToday = todayKey === keyLocal
+            const light = theme === 'light'
             return (
               <div
-                key={key}
+                key={keyLocal}
                 className={[
                   'flex h-10 flex-col items-center justify-center rounded-lg border text-xs transition',
                   hasWorkout
-                    ? 'border-sky-300/60 bg-sky-400/20 text-sky-100'
-                    : 'border-white/10 bg-white/5 text-slate-400',
-                  isToday ? 'ring-2 ring-sky-300/80' : ''
+                    ? light
+                      ? 'border-sky-600 bg-sky-100 text-sky-800'
+                      : 'border-sky-300/60 bg-sky-400/20 text-sky-100'
+                    : light
+                      ? 'border-slate-200 bg-white text-slate-700'
+                      : 'border-white/10 bg-white/5 text-slate-400',
+                  isToday
+                    ? light
+                      ? 'ring-2 ring-sky-500/70'
+                      : 'ring-2 ring-sky-300/80'
+                    : ''
                 ].join(' ')}
                 title={hasWorkout ? `${count} treino(s)` : 'Sem treino'}
               >
