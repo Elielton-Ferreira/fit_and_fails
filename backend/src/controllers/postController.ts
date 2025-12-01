@@ -1,9 +1,23 @@
 import { Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
 import postService from '../services/postService'
 
 export async function getAll(req: Request, res: Response) {
   try {
-    const viewerId = (req as any).userId
+    // leitura pública, mas se houver token aproveitamos para sinalizar likedByViewer
+    let viewerId: string | undefined
+    const authHeader = req.headers.authorization
+    if (authHeader) {
+      const [scheme, token] = authHeader.split(' ')
+      if (scheme?.toLowerCase() === 'bearer' && token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret_jwt_change_me') as any
+          viewerId = decoded?.userId
+        } catch {
+          // token inválido? apenas ignora, segue como público
+        }
+      }
+    }
     const posts = await postService.getAll({
       type: req.query.type as string,
       day: req.query.day as string,

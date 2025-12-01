@@ -8,7 +8,7 @@ import { useAuth } from '../auth/AuthContext'
 
 const Feed = () => {
   const { theme } = useTheme()
-  const { user } = useAuth()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const [sections, setSections] = useState<Array<{ day: string; posts: Post[] }>>([])
   const [previousDayCursor, setPreviousDayCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,8 +50,16 @@ const Feed = () => {
   }, [])
 
   useEffect(() => {
+    // busca inicial (mesmo antes do auth finalizar, para carregar algo)
     fetchPosts()
   }, [fetchPosts])
+
+  useEffect(() => {
+    // após autenticar (token aplicado no axios), refaz a busca para trazer likedByViewer correto
+    if (!authLoading && isAuthenticated) {
+      fetchPosts(undefined, 'replace')
+    }
+  }, [authLoading, isAuthenticated, fetchPosts])
 
   useEffect(() => {
     const interval = setInterval(() => {
