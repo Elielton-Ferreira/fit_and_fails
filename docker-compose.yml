@@ -4,6 +4,7 @@ services:
     image: postgres:15
     restart: unless-stopped
     environment:
+      TZ: America/Sao_Paulo
       POSTGRES_USER: fitandfails
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: fitandfails
@@ -19,12 +20,13 @@ services:
     depends_on:
       - db
     environment:
+      TZ: America/Sao_Paulo
       DATABASE_URL: postgres://fitandfails:postgres@db:5432/fitandfails
       JWT_SECRET: supersecret_jwt
       PORT: '4000'
       WATER_DEFAULT_GOAL: '2000'
-      # Allow local frontend origins for CORS during dockerized dev
-      FRONTEND_URL: http://localhost:3000,http://127.0.0.1:3000
+      # Allow local frontend origins for CORS during dockerized dev (desktop + LAN)
+      FRONTEND_URL: http://localhost:3000,http://127.0.0.1:3000,http://192.168.15.89:3000
     ports:
       - '4000:4000'
     volumes:
@@ -39,7 +41,8 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://localhost:4000
+      TZ: America/Sao_Paulo
+      VITE_API_URL: http://192.168.15.89:4000
     ports:
       - '3000:3000'
     volumes:
