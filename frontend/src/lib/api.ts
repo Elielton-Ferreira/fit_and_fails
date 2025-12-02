@@ -1,11 +1,9 @@
 import axios from 'axios'
 
-const runtimeBaseUrl =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:4000` : 'http://localhost:4000')
+const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 const api = axios.create({
-  baseURL: `${runtimeBaseUrl}/api`,
+  baseURL: API_BASE,
   timeout: 10000
 })
 
