@@ -6,6 +6,20 @@ import api from '../../lib/api'
 import { Post, PostsByDayResponse } from '../../types'
 import { useAuth } from '../auth/AuthContext'
 
+const isDayKey = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+
+const toLocalDayKey = (input: string | Date) => {
+  if (typeof input === 'string' && isDayKey(input)) return input
+  const date = typeof input === 'string' ? new Date(input) : input
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().substring(0, 10)
+}
+
+const parseDayKey = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 const Feed = () => {
   const { theme } = useTheme()
   const { user, isAuthenticated, loading: authLoading } = useAuth()
@@ -15,9 +29,8 @@ const Feed = () => {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
 
-  const dayLabel = useMemo(
-    () =>
-      new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).format,
+  const formatDayLabel = useMemo(
+    () => new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).format,
     []
   )
 
@@ -35,12 +48,13 @@ const Feed = () => {
     try {
       if (mode === 'append') setLoadingMore(true)
       const { data } = await api.get<PostsByDayResponse>('/posts', { params: day ? { day } : { limit: 50 } })
+      const normalizedDay = toLocalDayKey(data.day)
       if (mode === 'replace') {
-        setSections([{ day: data.day, posts: data.posts }])
+        setSections([{ day: normalizedDay, posts: data.posts }])
       } else {
-        mergeSection(data.day, data.posts, 'append')
+        mergeSection(normalizedDay, data.posts, 'append')
       }
-      setPreviousDayCursor(data.previousDay)
+      setPreviousDayCursor(data.previousDay ? toLocalDayKey(data.previousDay) : null)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -69,7 +83,7 @@ const Feed = () => {
   }, [fetchPosts])
 
   const handleNewPost = (post: Post) => {
-    const day = post.createdAt.substring(0, 10)
+    const day = toLocalDayKey(post.createdAt)
     mergeSection(day, [post], 'prepend')
   }
 
@@ -147,7 +161,7 @@ const Feed = () => {
                       : 'border border-white/10 bg-white/5 text-white'
                   ].join(' ')}
                 >
-                  {dayLabel(new Date(section.day))}
+                  {formatDayLabel(parseDayKey(section.day))}
                 </span>
                 <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
                   {section.posts.length} posts

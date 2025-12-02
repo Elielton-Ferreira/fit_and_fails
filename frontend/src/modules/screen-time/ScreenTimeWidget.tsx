@@ -115,24 +115,14 @@ const ScreenTimeWidget = () => {
     try {
       const { data } = await api.post<BookLog>(`/books/${selectedBookId}/logs`, {
         pages,
-        date: `${date}T12:00:00`
+        date: `${date}T12:00:00`,
+        shareToFeed: true,
+        imageUrl: mediaUrl || undefined
       })
       setLogs((prev) => [data, ...prev])
       setPagesRead('')
       setMessage('Leitura registrada 📚')
       setTimeout(() => setMessage(''), 1500)
-      // cria um post no feed com opcional de imagem
-      try {
-        const bookTitle = books.find((b) => b.id === selectedBookId)?.title ?? 'um livro'
-        await api.post('/posts', {
-          type: 'screen_time',
-          text: `Hoje li ${pages} páginas do livro "${bookTitle}"`,
-          imageUrl: mediaUrl || undefined
-        })
-      } catch (postErr: any) {
-        // apenas registra o erro na UI, mas não bloqueia o log
-        setError(postErr?.message || 'Não foi possível publicar no feed.')
-      }
       setMediaUrl('')
       setMediaLabel('')
       setMediaError('')

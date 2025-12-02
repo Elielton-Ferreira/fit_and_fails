@@ -52,12 +52,18 @@ export async function logPages(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { bookId } = req.params
-    const { pages, date } = req.body
+    const { pages, date, shareToFeed, imageUrl } = req.body
+    const parsedPages = Number(pages)
+    if (Number.isNaN(parsedPages)) throw new Error('Páginas inválidas')
+    const parsedDate = date ? new Date(date) : undefined
+    if (parsedDate && Number.isNaN(parsedDate.getTime())) throw new Error('Data inválida')
     const log = await bookService.logPages({
       userId,
       bookId,
-      pages: Number(pages),
-      date: date ? new Date(date) : undefined
+      pages: parsedPages,
+      date: parsedDate,
+      shareToFeed: shareToFeed !== undefined ? Boolean(shareToFeed) : true,
+      imageUrl: imageUrl || undefined
     })
     return res.status(201).json(log)
   } catch (err: any) {

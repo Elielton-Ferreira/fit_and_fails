@@ -5,6 +5,19 @@ import commentRepository from '../repositories/commentRepository'
 
 const allowedTypes: PostType[] = ['water', 'screen_time', 'exercise', 'shame', 'healthy_food']
 
+const parseDayParam = (day?: string) => {
+  if (!day) return new Date()
+  const [year, month, dayNumber] = day.split('-').map(Number)
+  if ([year, month, dayNumber].some((value) => Number.isNaN(value))) return new Date()
+  return new Date(year, month - 1, dayNumber)
+}
+
+const formatLocalDay = (date: Date) => {
+  const local = new Date(date)
+  local.setMinutes(local.getMinutes() - local.getTimezoneOffset())
+  return local.toISOString().substring(0, 10)
+}
+
 type PostWithRelations = Post & {
   user: { id: string; name: string; avatarUrl?: string | null }
   _count: { likes: number; comments: number }
@@ -55,7 +68,7 @@ const getAll = async ({ type, viewerId, day, limit }: { type?: string; viewerId?
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const baseDay = day ? new Date(day) : today
+  const baseDay = parseDayParam(day)
   baseDay.setHours(0, 0, 0, 0)
   const nextDay = new Date(baseDay)
   nextDay.setDate(baseDay.getDate() + 1)
@@ -72,13 +85,11 @@ const getAll = async ({ type, viewerId, day, limit }: { type?: string; viewerId?
   const previousDayDate = await postRepository.findPreviousDayWithPosts(baseDay, normalizedType)
   const nextDayDate = await postRepository.findNextDayWithPosts(nextDay, normalizedType)
 
-  const formatDay = (d: Date | null) => (d ? d.toISOString().substring(0, 10) : null)
-
   return {
-    day: baseDay.toISOString().substring(0, 10),
+    day: formatLocalDay(baseDay),
     posts: mapped,
-    previousDay: formatDay(previousDayDate),
-    nextDay: formatDay(nextDayDate)
+    previousDay: previousDayDate ? formatLocalDay(previousDayDate) : null,
+    nextDay: nextDayDate ? formatLocalDay(nextDayDate) : null
   }
 }
 

@@ -25,17 +25,33 @@ const deleteBook = async (userId: string, bookId: string) => {
   await bookRepository.deleteBook(bookId, userId)
 }
 
-const logPages = async ({ userId, bookId, pages, date }: { userId: string; bookId: string; pages: number; date?: Date }) => {
+const logPages = async ({
+  userId,
+  bookId,
+  pages,
+  date,
+  shareToFeed = true,
+  imageUrl
+}: {
+  userId: string
+  bookId: string
+  pages: number
+  date?: Date
+  shareToFeed?: boolean
+  imageUrl?: string | null
+}) => {
   if (!pages || pages <= 0) throw new Error('Páginas deve ser maior que zero')
   const existing = await bookRepository.findBook(bookId, userId)
   if (!existing) throw new Error('Livro não encontrado')
   const log = await bookRepository.createLog(userId, bookId, date || new Date(), pages)
-  // Cria um post no feed automaticamente
-  await postService.create({
-    userId,
-    type: 'screen_time',
-    text: `Hoje li ${pages} páginas do livro "${existing.title}" 📚`
-  })
+  if (shareToFeed) {
+    await postService.create({
+      userId,
+      type: 'screen_time',
+      text: `Hoje li ${pages} páginas do livro "${existing.title}" 📚`,
+      imageUrl: imageUrl || undefined
+    })
+  }
   return log
 }
 
