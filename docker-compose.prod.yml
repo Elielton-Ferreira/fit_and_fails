@@ -14,7 +14,7 @@ services:
       - '5432:5432'
 
   backend:
-    image: docker.io/elieltondevopsengineer/fit-and-fails-backend:v4
+    image: docker.io/elieltondevopsengineer/fit-and-fails-backend:v9
     restart: unless-stopped
     depends_on:
       - db
@@ -29,7 +29,7 @@ services:
       - '4000:4000'
 
   frontend:
-    image: docker.io/elieltondevopsengineer/fit-and-fails-frontend:v13
+    image: docker.io/elieltondevopsengineer/fit-and-fails-frontend:v14
     restart: unless-stopped
     depends_on:
       - backend

@@ -91,7 +91,35 @@ docker build -t fit-and-fails-backend:latest ./backend
 docker build -t fit-and-fails-frontend:latest ./frontend
 ```
 
-Envie para seu registry (ex.: OCI Registry, GHCR, etc.) antes de aplicar no Kubernetes.
+Envie para seu registry (ex.: OCI Registry, GHCR, etc.) antes de aplicar no Kubernetes. **Observação importante:** o frontend lê `import.meta.env.VITE_API_URL` em build time; se não especificar nada ele usa `/api` (ideal para produção atrás do mesmo Nginx). Para builds que apontam para uma API diferente (por exemplo a VM de testes 192.168.86.129), informe `--build-arg VITE_API_URL=http://192.168.86.129:4000`.
+
+## Ambientes suportados
+
+| Ambiente           | Endereço                       | Observações                                                                 |
+|--------------------|--------------------------------|------------------------------------------------------------------------------|
+| **Testes (VM)**    | http://192.168.86.129:3000     | Use `docker-compose.yml`. O backend responde em `http://192.168.86.129:4000`.|
+| **Produção (VM)**  | http://72.61.50.39/            | `docker-compose.prod.yml` expõe frontend em :80 e backend em :4000.         |
+| **Produção (DNS)** | https://fitfails.cloud/        | DNS aponta para a VM anterior; TLS finaliza fora do Docker. Frontend chama `/api` e o Nginx interno faz proxy para o backend. |
+
+Para publicar a versão usada em produção:
+
+```bash
+# Backend
+docker build -t elieltondevopsengineer/fit-and-fails-backend:v9 ./backend
+docker push elieltondevopsengineer/fit-and-fails-backend:v9
+
+# Frontend (usa proxy interno /api)
+docker build -t elieltondevopsengineer/fit-and-fails-frontend:v14 \
+  --build-arg VITE_API_URL=/api \
+  ./frontend
+docker push elieltondevopsengineer/fit-and-fails-frontend:v14
+
+# No servidor de produção
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Lembre de definir o arquivo `.env` com `POSTGRES_PASSWORD`, `JWT_SECRET`, `FRONTEND_URL` (incluindo `https://fitfails.cloud`) e `VITE_API_URL` somente quando precisar mudar o endpoint padrão.
 
 ## Kubernetes (OCI OKE)
 
