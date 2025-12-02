@@ -1,6 +1,13 @@
 import { Request, Response } from 'express'
 import prisma from '../prisma'
 
+const parseDayParam = (day?: string) => {
+  if (!day) return new Date()
+  const [year, month, dayNumber] = day.split('-').map(Number)
+  if ([year, month, dayNumber].some((value) => Number.isNaN(value))) return new Date()
+  return new Date(year, month - 1, dayNumber)
+}
+
 const startOfDay = (date: Date) => {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
@@ -13,10 +20,16 @@ const endOfDay = (date: Date) => {
   return d
 }
 
+const formatLocalDate = (date: Date) => {
+  const local = new Date(date)
+  local.setMinutes(local.getMinutes() - local.getTimezoneOffset())
+  return local.toISOString().substring(0, 10)
+}
+
 export async function list(req: Request, res: Response) {
   try {
     const dayParam = req.query.day as string | undefined
-    const ref = dayParam ? new Date(dayParam) : new Date()
+    const ref = parseDayParam(dayParam)
     const start = startOfDay(ref)
     const end = endOfDay(ref)
 
@@ -49,7 +62,7 @@ export async function list(req: Request, res: Response) {
         userId: u.id,
         name: u.name,
         email: u.email,
-        date: start.toISOString().substring(0, 10),
+        date: formatLocalDate(start),
         waterTotal,
         waterGoal: u.waterGoalMl,
         waterMet,
@@ -66,7 +79,7 @@ export async function list(req: Request, res: Response) {
 
 export async function weekly(req: Request, res: Response) {
   try {
-    const ref = req.query.day ? new Date(String(req.query.day)) : new Date()
+    const ref = parseDayParam(req.query.day ? String(req.query.day) : undefined)
     const start = startOfDay(ref)
     start.setDate(start.getDate() - start.getDay()) // Domingo
     const end = new Date(start)
@@ -95,26 +108,26 @@ export async function weekly(req: Request, res: Response) {
     const days = Array.from({ length: 7 }).map((_, idx) => {
       const d = new Date(start)
       d.setDate(start.getDate() + idx)
-      return d.toISOString().substring(0, 10)
+      return formatLocalDate(d)
     })
 
     const waterByUserDay: Record<string, Record<string, number>> = {}
     waterLogs.forEach((log) => {
-      const day = log.date.toISOString().substring(0, 10)
+      const day = formatLocalDate(log.date)
       waterByUserDay[log.userId] = waterByUserDay[log.userId] || {}
       waterByUserDay[log.userId][day] = (waterByUserDay[log.userId][day] || 0) + log.amountMl
     })
 
     const exerciseByUserDay: Record<string, Set<string>> = {}
     exerciseLogs.forEach((log) => {
-      const day = log.startTime.toISOString().substring(0, 10)
+      const day = formatLocalDate(log.startTime)
       if (!exerciseByUserDay[log.userId]) exerciseByUserDay[log.userId] = new Set()
       exerciseByUserDay[log.userId].add(day)
     })
 
     const readingByUserDay: Record<string, Set<string>> = {}
     readingLogs.forEach((log) => {
-      const day = log.date.toISOString().substring(0, 10)
+      const day = formatLocalDate(log.date)
       if (!readingByUserDay[log.userId]) readingByUserDay[log.userId] = new Set()
       readingByUserDay[log.userId].add(day)
     })

@@ -4,11 +4,21 @@ import { useAuth } from '../modules/auth/AuthContext'
 import api from '../lib/api'
 import { RankingEntry, WeeklyRankingResponse } from '../types'
 
+const getLocalISODate = (date = new Date()) => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().substring(0, 10)
+}
+
+const parseLocalDate = (isoDate: string) => {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 const RankingPage = () => {
   const { user, token } = useAuth()
   const [rows, setRows] = useState<RankingEntry[]>([])
   const [error, setError] = useState('')
-  const [day, setDay] = useState(() => new Date().toISOString().substring(0, 10))
+  const [day, setDay] = useState(() => getLocalISODate())
   const [weekly, setWeekly] = useState<WeeklyRankingResponse | null>(null)
 
   useEffect(() => {
@@ -97,11 +107,14 @@ const RankingPage = () => {
               <thead>
                 <tr>
                   <th className="px-3 py-2 text-left">Nome</th>
-                  {weekly.days.map((d) => (
-                    <th key={d} className="px-2 py-2 text-center">
-                      {new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                    </th>
-                  ))}
+                  {weekly.days.map((d) => {
+                    const localDate = parseLocalDate(d)
+                    return (
+                      <th key={d} className="px-2 py-2 text-center">
+                        {localDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                      </th>
+                    )
+                  })}
                 </tr>
               </thead>
               <tbody>
