@@ -65,18 +65,7 @@ const WaterWidget = () => {
         {snapshot.canCelebrate && <Badge label="Meta batida!" variant="success" />}
       </header>
 
-      <div className="mt-6">
-        <div className="flex items-end justify-between">
-          <p className="text-4xl font-bold text-primary">{snapshot.progress}%</p>
-          <p className="text-sm text-slate-400">
-            {snapshot.totalMl} ml ingeridos • faltam {snapshot.pendingMl} ml
-          </p>
-        </div>
-        <div className="mt-3 h-3 rounded-full bg-white/10">
-          <div className="h-3 rounded-full bg-gradient-to-r from-primary to-secondary" style={{ width: `${snapshot.progress}%` }} />
-        </div>
-        {nextSegment && <p className="mt-2 text-xs text-slate-500">Próximo lembrete em {nextSegment} ml</p>}
-      </div>
+      <WaterProgressCircle snapshot={snapshot} nextSegment={nextSegment} />
 
       <div className="mt-6 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/5 p-4">
@@ -138,3 +127,68 @@ const WaterWidget = () => {
 }
 
 export default WaterWidget
+
+const WaterProgressCircle = ({
+  snapshot,
+  nextSegment
+}: {
+  snapshot: WaterSnapshot
+  nextSegment: number | null
+}) => {
+  const size = 220
+  const stroke = 14
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+  const clampedProgress = Math.min(100, Math.max(0, snapshot.progress))
+  const offset = circumference - (clampedProgress / 100) * circumference
+  const totalLiters = (snapshot.totalMl / 1000).toFixed(1)
+  const goalLiters = (snapshot.goalMl / 1000).toFixed(1)
+
+  return (
+    <div className="mt-6 flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative flex items-center justify-center">
+        <svg width={size} height={size}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="#1f2937"
+            strokeWidth={stroke}
+            fill="transparent"
+            strokeLinecap="round"
+            className="opacity-40"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="url(#water-gradient)"
+            strokeWidth={stroke}
+            fill="transparent"
+            strokeLinecap="round"
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={offset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+          <defs>
+            <linearGradient id="water-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#00b4d8" />
+              <stop offset="100%" stopColor="#0ea5e9" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute text-center">
+          <p className="text-4xl font-bold text-white">{clampedProgress}%</p>
+          <p className="text-sm text-slate-400 mt-1">{totalLiters} L</p>
+          <p className="text-xs text-slate-500">de {goalLiters} L</p>
+        </div>
+      </div>
+      <div className="text-sm text-slate-400 text-center lg:text-left">
+        <p>
+          {snapshot.totalMl} ml ingeridos • faltam <span className="text-white">{snapshot.pendingMl} ml</span>
+        </p>
+        {nextSegment && <p className="mt-2 text-xs text-slate-500">Próximo lembrete em {nextSegment} ml</p>}
+      </div>
+    </div>
+  )
+}
