@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -42,6 +42,16 @@ const PostCard = ({
   const [commentError, setCommentError] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
   const visibleComments = post.comments.items.slice(0, 2)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  useEffect(() => {
+    if (!previewOpen) return
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewOpen(false)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [previewOpen])
 
   const handleCommentKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -68,7 +78,8 @@ const PostCard = ({
   }
 
   return (
-    <article
+    <>
+      <article
       className={[
         'glass-panel rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.4)]',
         isLight ? 'border border-slate-200 bg-white text-slate-900' : 'border border-white/10 bg-white/5 text-slate-100'
@@ -114,11 +125,15 @@ const PostCard = ({
         </div>
       </header>
 
-      {post.imageUrl && (
-        <div className="relative h-72 w-full overflow-hidden rounded-b-3xl bg-black/30">
-          <img src={post.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-        </div>
-      )}
+        {post.imageUrl && (
+          <button
+            type="button"
+            className="relative h-72 w-full overflow-hidden rounded-b-3xl bg-black/30 focus:outline-none"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <img src={post.imageUrl} alt="Prévia da publicação" className="h-full w-full object-cover" loading="lazy" />
+          </button>
+        )}
 
       <div className="px-5 py-4">
         {post.badgeType && (
@@ -204,7 +219,28 @@ const PostCard = ({
         </div>
         {commentError && <p className="mt-2 text-xs text-rose-300">{commentError}</p>}
       </div>
-    </article>
+      </article>
+      {previewOpen && post.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="max-h-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-black/30 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <img src={post.imageUrl} alt="Visualização ampliada" className="h-full w-full object-contain" />
+            <div className="flex justify-end border-t border-white/10 bg-black/50 p-3">
+              <Button type="button" onClick={() => setPreviewOpen(false)} className="px-6">
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
