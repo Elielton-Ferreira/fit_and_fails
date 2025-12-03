@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import { WaterSnapshot } from '../../types'
+import { RankingEntry, WaterSnapshot } from '../../types'
 
 const segments = [0.25, 0.5, 0.75, 1]
 
@@ -12,6 +12,9 @@ const WaterWidget = () => {
   const [goal, setGoal] = useState(2000)
   const [feedback, setFeedback] = useState('')
   const [history, setHistory] = useState<WaterSnapshot['logs']>([])
+  const [friendsHydration, setFriendsHydration] = useState<RankingEntry[]>([])
+  const [friendsError, setFriendsError] = useState('')
+  const [friendsLoading, setFriendsLoading] = useState(true)
 
   const fetchSnapshot = useCallback(async () => {
     const { data } = await api.get('/water')
@@ -23,6 +26,23 @@ const WaterWidget = () => {
   useEffect(() => {
     fetchSnapshot()
   }, [fetchSnapshot])
+
+  const fetchFriendsHydration = useCallback(async () => {
+    try {
+      setFriendsError('')
+      setFriendsLoading(true)
+      const { data } = await api.get<RankingEntry[]>('/ranking')
+      setFriendsHydration(data)
+    } catch (err: any) {
+      setFriendsError(err.message)
+    } finally {
+      setFriendsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchFriendsHydration()
+  }, [fetchFriendsHydration])
 
   const addLog = async () => {
     if (!logAmount) return
@@ -46,6 +66,18 @@ const WaterWidget = () => {
     if (!next) return null
     return Math.round(snapshot.goalMl * next)
   }, [snapshot])
+
+  const friendsWithProgress = useMemo(() => {
+    return friendsHydration
+      .map((friend) => {
+        const percent = friend.waterGoal > 0 ? Math.min(100, Math.round((friend.waterTotal / friend.waterGoal) * 100)) : 0
+        return { ...friend, percent }
+      })
+      .sort((a, b) => {
+        if (b.percent !== a.percent) return b.percent - a.percent
+        return b.waterTotal - a.waterTotal
+      })
+  }, [friendsHydration])
 
   if (!snapshot) {
     return (
@@ -121,6 +153,47 @@ const WaterWidget = () => {
               )
             })}
         </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-white/5 p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">Hidratação Amigos</p>
+            <p className="text-xs text-slate-400">Veja como a galera está hidratando hoje.</p>
+          </div>
+          {friendsLoading && <p className="text-xs text-slate-400">Carregando...</p>}
+          {friendsError && <p className="text-xs text-rose-300">{friendsError}</p>}
+        </div>
+
+        {!friendsLoading && !friendsError && (
+          <>
+            {friendsWithProgress.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">Convide amigos para acompanhar a hidratação em tempo real.</p>
+            ) : (
+              <ul className="mt-4 space-y-3 max-h-72 overflow-y-auto pr-1">
+                {friendsWithProgress.map((friend) => (
+                  <li key={friend.userId} className="rounded-2xl border border-white/5 bg-white/5 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <div>
+                        <p className="font-semibold text-white">{friend.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {friend.waterTotal} / {friend.waterGoal} ml
+                        </p>
+                      </div>
+                      <span className={`text-sm font-semibold ${friend.waterMet ? 'text-emerald-300' : 'text-sky-300'}`}>{friend.percent}%</span>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-white/10">
+                      <div
+                        className={`h-2 rounded-full ${friend.waterMet ? 'bg-emerald-400' : 'bg-primary'}`}
+                        style={{ width: `${friend.percent}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </div>
     </section>
   )
