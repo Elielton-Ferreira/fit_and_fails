@@ -3,6 +3,7 @@ import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { RankingEntry, WaterSnapshot } from '../../types'
+import { useAuth } from '../auth/AuthContext'
 
 const segments = [0.25, 0.5, 0.75, 1]
 
@@ -16,6 +17,7 @@ const WaterWidget = () => {
   const [friendsHydration, setFriendsHydration] = useState<RankingEntry[]>([])
   const [friendsError, setFriendsError] = useState('')
   const [friendsLoading, setFriendsLoading] = useState(true)
+  const { token } = useAuth()
 
   const fetchSnapshot = useCallback(async () => {
     const { data } = await api.get('/water')
@@ -30,20 +32,24 @@ const WaterWidget = () => {
 
   const fetchFriendsHydration = useCallback(async () => {
     try {
+      if (!token) return
       setFriendsError('')
       setFriendsLoading(true)
-      const { data } = await api.get<RankingEntry[]>('/ranking')
+      const { data } = await api.get<RankingEntry[]>('/ranking', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setFriendsHydration(data)
     } catch (err: any) {
       setFriendsError(err.message)
     } finally {
       setFriendsLoading(false)
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
+    if (!token) return
     fetchFriendsHydration()
-  }, [fetchFriendsHydration])
+  }, [fetchFriendsHydration, token])
 
   const addLog = async () => {
     if (!logAmount) return

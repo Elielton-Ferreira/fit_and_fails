@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Book, BookLog } from '../../types'
 import IconCamera from '../../components/icons/IconCamera'
+import { useAuth } from '../auth/AuthContext'
 
 const todayLocal = () => {
   const now = new Date()
@@ -29,22 +30,30 @@ const ScreenTimeWidget = () => {
   const [mediaLabel, setMediaLabel] = useState('')
   const [mediaError, setMediaError] = useState('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const { token } = useAuth()
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    if (!token) return
     try {
       setError('')
-      const [bookRes, logRes] = await Promise.all([api.get<Book[]>('/books'), api.get<BookLog[]>('/books/logs/all')])
+      const headers = { Authorization: `Bearer ${token}` }
+      const [bookRes, logRes] = await Promise.all([
+        api.get<Book[]>('/books', { headers }),
+        api.get<BookLog[]>('/books/logs/all', { headers })
+      ])
       setBooks(bookRes.data)
       setLogs(logRes.data)
-      if (bookRes.data.length > 0 && !selectedBookId) setSelectedBookId(bookRes.data[0].id)
+      if (bookRes.data.length > 0) {
+        setSelectedBookId((prev) => prev ?? bookRes.data[0].id)
+      }
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Não foi possível carregar livros.')
     }
-  }
+  }, [token])
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const handleSaveBook = async () => {
     if (!form.title.trim()) {
