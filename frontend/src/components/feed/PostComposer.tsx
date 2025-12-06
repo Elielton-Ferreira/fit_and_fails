@@ -61,8 +61,8 @@ const postTypes: { value: PostType; label: string; icon: JSX.Element }[] = [
 
 const IconCamera = () => (
   <svg
-    width="64"
-    height="64"
+    width="48"
+    height="48"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -75,6 +75,14 @@ const IconCamera = () => (
     <path d="M9 7l1-2h4l1 2" />
     <circle cx="12" cy="13" r="4" />
     <path d="M17.5 9.5v.01" />
+  </svg>
+)
+
+const IconGallery = () => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-sky-200">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8" cy="9" r="2" />
+    <path d="M3 16l4-3a2 2 0 0 1 2.7.2l3.6 3.6a2 2 0 0 0 2.8 0L21 13" />
   </svg>
 )
 
@@ -91,7 +99,8 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mediaInfo, setMediaInfo] = useState('')
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const galleryInputRef = useRef<HTMLInputElement | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
   const dragging = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
   const previewRef = useRef<HTMLDivElement | null>(null)
@@ -269,19 +278,38 @@ const cropImage = async (
 
         <div className="rounded-3xl border border-white/12 bg-white/5 p-3">
           <div className="flex justify-center">
-            <div className="flex w-full max-w-md flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex h-24 w-24 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
-              >
-                <IconCamera />
-              </button>
+            <div className="flex w-full max-w-md flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="flex h-20 w-20 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                  aria-label="Escolher da galeria"
+                >
+                  <IconGallery />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex h-20 w-20 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                  aria-label="Abrir câmera"
+                >
+                  <IconCamera />
+                </button>
+              </div>
+              <p className={`text-[11px] ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Galeria ou câmera (mobile mostra chooser nativo)</p>
               {mediaInfo && <p className={`text-xs ${theme === 'light' ? 'text-slate-600' : 'text-sky-200'}`}>{mediaInfo}</p>}
             </div>
           </div>
           <input
-            ref={fileInputRef}
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <input
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
