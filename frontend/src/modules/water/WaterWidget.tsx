@@ -157,26 +157,6 @@ const WaterWidget = () => {
       {feedback && <p className="mt-4 text-sm text-sky-200">{feedback}</p>}
 
       <div className="mt-6 rounded-2xl border border-white/5 p-4">
-        <p className="text-sm font-semibold text-white">Histórico de ingestão</p>
-        <div className="mt-3 max-h-60 space-y-2 overflow-y-auto">
-          {history.length === 0 && <p className="text-sm text-slate-500">Nenhum log hoje.</p>}
-          {history
-            .slice()
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .map((log) => {
-              const date = new Date(log.date)
-              const day = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-              return (
-                <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-200">
-                  <span>{day}</span>
-                  <span className="font-semibold text-white">{log.amountMl} ml</span>
-                </div>
-              )
-            })}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-white/5 p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-white">Hidratação Amigos</p>
@@ -191,7 +171,7 @@ const WaterWidget = () => {
             {friendsWithProgress.length === 0 ? (
               <p className="mt-4 text-sm text-slate-500">Convide amigos para acompanhar a hidratação em tempo real.</p>
             ) : (
-              <ul className="mt-4 space-y-3 max-h-72 overflow-y-auto pr-1">
+              <ul className="mt-4 space-y-3">
                 {friendsWithProgress.map((friend) => (
                   <li key={friend.userId} className="rounded-2xl border border-white/5 bg-white/5 px-3 py-3">
                     <div className="flex items-center justify-between gap-3 text-sm">
@@ -215,6 +195,26 @@ const WaterWidget = () => {
             )}
           </>
         )}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Histórico de ingestão</p>
+        <div className="mt-3 max-h-60 space-y-2 overflow-y-auto">
+          {history.length === 0 && <p className="text-sm text-slate-500">Nenhum log hoje.</p>}
+          {history
+            .slice()
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((log) => {
+              const date = new Date(log.date)
+              const day = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+              return (
+                <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-200">
+                  <span>{day}</span>
+                  <span className="font-semibold text-white">{log.amountMl} ml</span>
+                </div>
+              )
+            })}
+        </div>
       </div>
     </section>
   )
