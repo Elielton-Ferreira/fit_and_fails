@@ -40,17 +40,29 @@ const getTodaySnapshot = async (userId: string) => {
   }
 }
 
-const addLog = async ({ userId, amountMl, dailyGoalMl }: { userId: string; amountMl: number; dailyGoalMl?: number }) => {
+const addLog = async ({
+  userId,
+  amountMl,
+  dailyGoalMl,
+  shareOnFeed
+}: {
+  userId: string
+  amountMl: number
+  dailyGoalMl?: number
+  shareOnFeed?: boolean
+}) => {
   const goal = dailyGoalMl || (await getGoalForUser(userId))
   await waterRepository.create({ userId, date: new Date(), amountMl, dailyGoalMl: goal })
   const snapshot = await getTodaySnapshot(userId)
 
-  // Compartilha no feed cada ingestão de água
-  await postService.create({
-    userId,
-    type: 'water',
-    text: `Bebi ${amountMl}ml de água agora. Total do dia: ${snapshot.totalMl}ml.`
-  })
+  // Compartilha no feed apenas quando solicitado pelo usuário
+  if (shareOnFeed) {
+    await postService.create({
+      userId,
+      type: 'water',
+      text: `Bebi ${amountMl}ml de água agora. Total do dia: ${snapshot.totalMl}ml.`
+    })
+  }
 
   if (snapshot.canCelebrate) {
     notificationService.notifyWaterGoalAchieved(userId, snapshot.totalMl, snapshot.goalMl)

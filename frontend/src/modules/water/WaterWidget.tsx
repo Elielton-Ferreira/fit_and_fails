@@ -9,6 +9,7 @@ const segments = [0.25, 0.5, 0.75, 1]
 const WaterWidget = () => {
   const [snapshot, setSnapshot] = useState<WaterSnapshot | null>(null)
   const [logAmount, setLogAmount] = useState(250)
+  const [shareOnFeed, setShareOnFeed] = useState(false)
   const [goal, setGoal] = useState(2000)
   const [feedback, setFeedback] = useState('')
   const [history, setHistory] = useState<WaterSnapshot['logs']>([])
@@ -46,7 +47,7 @@ const WaterWidget = () => {
 
   const addLog = async () => {
     if (!logAmount) return
-    const { data } = await api.post('/water', { amountMl: logAmount })
+    const { data } = await api.post('/water', { amountMl: logAmount, shareOnFeed })
     setSnapshot(data)
     setHistory(data.logs)
     setFeedback('Log registrado! 💧')
@@ -114,6 +115,20 @@ const WaterWidget = () => {
               + ml
             </Button>
           </div>
+          <label className="mt-3 flex items-start gap-2 text-xs text-slate-300">
+            <input
+              type="checkbox"
+              checked={shareOnFeed}
+              onChange={(event) => setShareOnFeed(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary"
+            />
+            <span>
+              Compartilhar no feed
+              <span className="mt-0.5 block text-[11px] text-slate-500">
+                Posta este registro; ao bater a meta o post é automático.
+              </span>
+            </span>
+          </label>
         </div>
         <div className="rounded-2xl border border-white/5 p-4">
           <p className="text-sm text-slate-300">Configurar meta</p>

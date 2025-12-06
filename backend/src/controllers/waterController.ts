@@ -16,8 +16,9 @@ export async function addLog(req: Request, res: Response) {
     const userId = (req as any).userId
     const amountMl = Number(req.body.amountMl)
     const dailyGoalMl = req.body.dailyGoalMl ? Number(req.body.dailyGoalMl) : undefined
+    const shareOnFeed = req.body.shareOnFeed === true || req.body.shareOnFeed === 'true'
     if (Number.isNaN(amountMl)) throw new Error('amountMl inválido')
-    const snapshot = await waterService.addLog({ userId, amountMl, dailyGoalMl })
+    const snapshot = await waterService.addLog({ userId, amountMl, dailyGoalMl, shareOnFeed })
     return res.status(201).json(snapshot)
   } catch (err: any) {
     return res.status(400).json({ error: err.message })

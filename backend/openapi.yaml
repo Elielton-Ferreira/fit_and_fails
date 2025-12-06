@@ -280,6 +280,9 @@ paths:
               properties:
                 amountMl: { type: integer }
                 dailyGoalMl: { type: integer }
+                shareOnFeed:
+                  type: boolean
+                  description: Compartilhar a ingestão no feed
       responses:
         '201':
           description: Snapshot atualizado
