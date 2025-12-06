@@ -7,6 +7,14 @@ import { Book, BookLog } from '../../types'
 import IconCamera from '../../components/icons/IconCamera'
 import { useAuth } from '../auth/AuthContext'
 
+const IconGallery = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-sky-200">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8" cy="9" r="2" />
+    <path d="M3 16l4-3a2 2 0 0 1 2.7.2l3.6 3.6a2 2 0 0 0 2.8 0L21 13" />
+  </svg>
+)
+
 const todayLocal = () => {
   const now = new Date()
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
@@ -29,7 +37,8 @@ const ScreenTimeWidget = () => {
   const [mediaUrl, setMediaUrl] = useState('')
   const [mediaLabel, setMediaLabel] = useState('')
   const [mediaError, setMediaError] = useState('')
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const galleryInputRef = useRef<HTMLInputElement | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
   const { token } = useAuth()
 
   const loadData = useCallback(async () => {
@@ -252,11 +261,20 @@ const ScreenTimeWidget = () => {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white">
               <p className="text-xs text-slate-300">Foto do momento de leitura</p>
-              <div className="mt-3 flex justify-center">
+              <div className="mt-3 flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex h-24 w-24 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="flex h-20 w-20 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                  aria-label="Escolher da galeria"
+                >
+                  <IconGallery />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex h-20 w-20 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                  aria-label="Abrir câmera"
                 >
                   <IconCamera className="h-10 w-10 text-sky-200" />
                 </button>
@@ -281,7 +299,14 @@ const ScreenTimeWidget = () => {
               {mediaLabel && <p className="mt-2 text-xs text-sky-200 text-center">{mediaLabel}</p>}
               {mediaError && <p className="mt-2 text-xs text-rose-300">{mediaError}</p>}
               <input
-                ref={fileInputRef}
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <input
+                ref={cameraInputRef}
                 type="file"
                 accept="image/*"
                 capture="environment"
@@ -293,25 +318,6 @@ const ScreenTimeWidget = () => {
               Registrar e publicar no feed
             </Button>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-sm font-semibold text-white">Histórico de registros</p>
-        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
-          {logs.length === 0 && <p className="text-sm text-slate-400">Nenhum registro.</p>}
-          {logs.map((log) => {
-            const label = new Date(log.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-            return (
-              <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
-                <div className="flex flex-col">
-                  <span className="font-semibold">{log.book.title}</span>
-                  <span className="text-xs text-slate-400">{label}</span>
-                </div>
-                <span className="text-sm font-semibold text-white">{log.pages} págs</span>
-              </div>
-            )
-          })}
         </div>
       </div>
 
@@ -337,6 +343,25 @@ const ScreenTimeWidget = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm font-semibold text-white">Histórico de registros</p>
+        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+          {logs.length === 0 && <p className="text-sm text-slate-400">Nenhum registro.</p>}
+          {logs.map((log) => {
+            const label = new Date(log.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+            return (
+              <div key={log.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
+                <div className="flex flex-col">
+                  <span className="font-semibold">{log.book.title}</span>
+                  <span className="text-xs text-slate-400">{label}</span>
+                </div>
+                <span className="text-sm font-semibold text-white">{log.pages} págs</span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>
