@@ -5,6 +5,23 @@ import api from '../lib/api'
 import { useAuth } from '../modules/auth/AuthContext'
 import { useTheme } from '../modules/theme/ThemeProvider'
 
+const IconGallery = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-sky-200">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8" cy="9" r="2" />
+    <path d="M3 16l4-3a2 2 0 0 1 2.7.2l3.6 3.6a2 2 0 0 0 2.8 0L21 13" />
+  </svg>
+)
+
+const IconCamera = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-sky-200">
+    <rect x="3" y="7" width="18" height="12" rx="2" />
+    <path d="M9 7l1-2h4l1 2" />
+    <circle cx="12" cy="13" r="4" />
+    <path d="M17.5 9.5v.01" />
+  </svg>
+)
+
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth()
   const { theme, toggle } = useTheme()
@@ -12,7 +29,8 @@ const ProfilePage = () => {
   const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null)
   const [info, setInfo] = useState('')
   const [error, setError] = useState('')
-  const fileRef = useRef<HTMLInputElement | null>(null)
+  const galleryRef = useRef<HTMLInputElement | null>(null)
+  const cameraRef = useRef<HTMLInputElement | null>(null)
   const [adminUsers, setAdminUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminError, setAdminError] = useState('')
@@ -144,17 +162,27 @@ const ProfilePage = () => {
               )}
               <div className="space-y-2">
                 <p className="text-sm text-slate-400">Foto do perfil</p>
-                <Button type="button" variant="secondary" className="px-3 py-2 text-xs" onClick={() => fileRef.current?.click()}>
-                  Enviar foto / usar câmera
-                </Button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => galleryRef.current?.click()}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                    aria-label="Escolher da galeria"
+                  >
+                    <IconGallery />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cameraRef.current?.click()}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white transition hover:border-sky-200/60 hover:bg-white/10"
+                    aria-label="Abrir câmera"
+                  >
+                    <IconCamera />
+                  </button>
+                  <span className="text-xs text-slate-400">Galeria ou câmera</span>
+                </div>
+                <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleFileChange} />
               </div>
             </div>
           </div>
