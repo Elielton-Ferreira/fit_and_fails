@@ -155,6 +155,18 @@ Lembre de definir o arquivo `.env` com `POSTGRES_PASSWORD`, `JWT_SECRET`, `FRONT
 | `WATER_DEFAULT_GOAL` | Meta diária padrão em ml                       |
 | `FRONTEND_URL`       | URL pública do frontend (para CORS/notificações) |
 | `VITE_API_URL`       | URL base da API usada pelo frontend            |
+| `NOTIFICATION_PORT`  | Porta do microserviço de notificações (default 4100) |
+| `PUSH_ENABLED`       | Define se o envio de push está ativo           |
+| `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | Credenciais do service account FCM usadas pelo serviço de notificações |
+
+## Serviço de notificações
+
+Existe um microserviço separado em `notification/` (Node.js + TypeScript) que escuta os eventos do Postgres via `LISTEN/NOTIFY` e dispara push (FCM) para Android/iOS/Web:
+
+- Endpoints expostos: `POST /devices` (registrar token FCM com `userId`, `token`, `platform`, `appVersion?`), `POST /test` (envia push de teste para um usuário) e `GET /health`.
+- Dispara push em dois gatilhos: novos posts (`Post`) são enviados para todos os dispositivos menos o autor; novos likes (`Like`) são enviados para o dono do post.
+- A tabela auxiliar `notification_devices` é criada automaticamente na base. Triggers são instalados em `Post` e `Like` para publicar eventos nos canais `post_created` e `like_created`.
+- Configure as variáveis `FIREBASE_*` para uso real. Se estiverem vazias, o serviço sobe mas apenas registra tokens e ouve eventos sem tentar enviar push.
 
 ## Funcionalidades entregues
 

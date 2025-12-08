@@ -26,11 +26,32 @@ services:
       PORT: '4000'
       WATER_DEFAULT_GOAL: '2000'
       # Allow local frontend origins for CORS during dockerized dev (desktop + LAN)
-      FRONTEND_URL: http://localhost:3000,http://127.0.0.1:3000,http://192.168.86.129:3000
+      FRONTEND_URL: http://localhost:3000,http://127.0.0.1:3000,http://192.168.15.68:3000
     ports:
       - '4000:4000'
     volumes:
       - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+
+  notification:
+    build:
+      context: ./notification
+      target: builder
+    depends_on:
+      - db
+    environment:
+      TZ: America/Sao_Paulo
+      DATABASE_URL: postgres://fitandfails:postgres@db:5432/fitandfails
+      NOTIFICATION_PORT: '4100'
+      PUSH_ENABLED: 'true'
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL:-}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY:-}
+    ports:
+      - '4100:4100'
+    volumes:
+      - ./notification:/usr/src/app
       - /usr/src/app/node_modules
     command: npm run dev
 
@@ -42,7 +63,7 @@ services:
       - backend
     environment:
       TZ: America/Sao_Paulo
-      VITE_API_URL: http://192.168.86.129:4000
+      VITE_API_URL: http://192.168.15.68:4000/api
     ports:
       - '3000:3000'
     volumes:
