@@ -110,6 +110,7 @@ export type RankingEntry = {
   userId: string
   name: string
   email: string
+  avatarUrl?: string | null
   date: string
   waterTotal: number
   waterGoal: number
@@ -129,6 +130,7 @@ export type WeeklyRankingEntry = {
   userId: string
   name: string
   email: string
+  avatarUrl?: string | null
   days: WeeklyRankingDay[]
 }
 

@@ -34,7 +34,7 @@ export async function list(req: Request, res: Response) {
     const end = endOfDay(ref)
 
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, waterGoalMl: true }
+      select: { id: true, name: true, email: true, avatarUrl: true, waterGoalMl: true }
     })
 
     const waterLogs = await prisma.waterLog.groupBy({
@@ -62,6 +62,7 @@ export async function list(req: Request, res: Response) {
         userId: u.id,
         name: u.name,
         email: u.email,
+        avatarUrl: u.avatarUrl,
         date: formatLocalDate(start),
         waterTotal,
         waterGoal: u.waterGoalMl,
@@ -86,7 +87,7 @@ export async function weekly(req: Request, res: Response) {
     end.setDate(start.getDate() + 7)
 
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, waterGoalMl: true }
+      select: { id: true, name: true, email: true, avatarUrl: true, waterGoalMl: true }
     })
 
     // Água por dia
@@ -143,6 +144,7 @@ export async function weekly(req: Request, res: Response) {
         userId: u.id,
         name: u.name,
         email: u.email,
+        avatarUrl: u.avatarUrl,
         days: week
       }
     })

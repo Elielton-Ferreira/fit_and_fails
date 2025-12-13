@@ -175,11 +175,24 @@ const WaterWidget = () => {
                 {friendsWithProgress.map((friend) => (
                   <li key={friend.userId} className="rounded-2xl border border-white/5 bg-white/5 px-3 py-3">
                     <div className="flex items-center justify-between gap-3 text-sm">
-                      <div>
-                        <p className="font-semibold text-white">{friend.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {friend.waterTotal} / {friend.waterGoal} ml
-                        </p>
+                      <div className="flex items-center gap-3">
+                        {friend.avatarUrl ? (
+                          <img
+                            src={friend.avatarUrl}
+                            alt={friend.name}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
+                            {friend.name.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-white">{friend.name}</p>
+                          <p className="text-xs text-slate-400">
+                            {friend.waterTotal} / {friend.waterGoal} ml
+                          </p>
+                        </div>
                       </div>
                       <span className={`text-sm font-semibold ${friend.waterMet ? 'text-emerald-300' : 'text-sky-300'}`}>{friend.percent}%</span>
                     </div>
