@@ -56,7 +56,8 @@ const ProfilePage = () => {
     }
   }
 
-  const isAdmin = user?.email === 'elielton.gomes.ferreira@gmail.com'
+  const adminEmails = ['elielton.gomes.ferreira@gmail.com', 'admin@example.com']
+  const isAdmin = user?.email ? adminEmails.includes(user.email) : false
 
   const loadUsers = async () => {
     try {

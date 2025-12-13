@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import api from '../../lib/api'
+import { registerPushDevice, setupForegroundNotifications } from '../../lib/firebaseMessaging'
 
 type User = {
   id: string
@@ -51,6 +52,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token && user) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }))
       api.defaults.headers.common.Authorization = `Bearer ${token}`
+      registerPushDevice(user.id).catch((err) => {
+        console.warn('Falha ao registrar push', err)
+      })
+      setupForegroundNotifications().catch((err) => {
+        console.warn('Falha ao ativar notificações em foco', err)
+      })
     } else {
       localStorage.removeItem(STORAGE_KEY)
       delete api.defaults.headers.common.Authorization
