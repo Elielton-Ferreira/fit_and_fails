@@ -7,8 +7,10 @@ import {
   ensureSchema,
   fetchLikeSummary,
   fetchPostSummary,
+  getHydrationReminderCandidates,
   getTokensForBroadcast,
   getTokensForUser,
+  saveHydrationState,
   startDbListeners,
   upsertDevice
 } from './repository.js'
@@ -28,11 +30,35 @@ app.use(cors({ origin: '*'}))
 app.use(express.json())
 
 const postTypeLabels: Record<string, string> = {
-  water: 'hidratação',
-  screen_time: 'tempo de tela',
-  exercise: 'exercício',
-  shame: 'post da vergonha',
-  healthy_food: 'alimentação saudável'
+  water: 'compartilhou uma boa hidratação',
+  screen_time: 'compartilhou tempo de tela',
+  exercise: 'compartilhou exercícios',
+  shame: 'fez um post da vergonha',
+  healthy_food: 'compartilhou uma boa refeição',
+  books: 'compartilhou leitura diária'
+}
+
+const hydrationMessages: Record<
+  1 | 2 | 3,
+  string[]
+> = {
+  1: [
+    'Ei… já faz 1 hora desde o último gole. Seu corpo está olhando pra garrafa 👀',
+    'Alô, hidratação! Já passou 1 hora… bora dar um golinho?'
+  ],
+  2: [
+    'Já faz um tempinho sem água… sua pele pediu pra avisar 😬',
+    '2ª chamada da hidratação! O copo tá te esperando'
+  ],
+  3: [
+    'ALERTA DE SEDE 🚨 Seu corpo entrou no modo economia de água!',
+    'Parabéns! Você desbloqueou o nível Deserto do Saara 🏜️'
+  ]
+}
+
+const pickMessage = (level: 1 | 2 | 3) => {
+  const options = hydrationMessages[level]
+  return options[Math.floor(Math.random() * options.length)]
 }
 
 app.get('/health', (_req, res) => {
@@ -84,13 +110,11 @@ const handlePostCreated = async (postId: string) => {
     return
   }
 
-  const body = `${summary.authorName} compartilhou algo sobre ${
-    postTypeLabels[summary.type] ?? 'um novo hábito'
-  }`
+  const body = `${summary.authorName} ${postTypeLabels[summary.type] ?? 'compartilhou uma nova postagem'}`
 
   const result = await sendPush({
     tokens,
-    notification: { title: 'Nova história no Fit & Fails', body },
+    notification: { title: 'Nova postagem no Fit & Fails', body },
     data: { type: 'post_created', postId: summary.postId, authorId: summary.authorId }
   })
 
@@ -127,6 +151,76 @@ const handleLikeCreated = async (likeId: string) => {
   logInfo(`like_created => sent ${result.success} pushes, ${result.failure} falhas`)
 }
 
+const processHydrationReminders = async () => {
+  if (!config.pushEnabled || !config.firebase) return
+
+  const now = new Date()
+  const hour = now.getHours()
+
+  // Apenas entre 07:00 e 00:00
+  if (hour < 7 || hour >= 24) return
+
+  const windowStart = new Date(now)
+  windowStart.setHours(7, 0, 0, 0)
+
+  const candidates = await getHydrationReminderCandidates()
+
+  for (const candidate of candidates) {
+    const tokens = await getTokensForUser(candidate.userId)
+    if (!tokens.length) continue
+
+    const hasNewDrink =
+      candidate.lastDrinkAt &&
+      (!candidate.stateLastDrinkAt || candidate.lastDrinkAt > candidate.stateLastDrinkAt)
+
+    const reminderLevel = hasNewDrink || (!candidate.lastDrinkAt && candidate.stateLastDrinkAt)
+      ? 0
+      : candidate.lastReminderLevel ?? 0
+
+    const lastDrinkReference =
+      candidate.lastDrinkAt && candidate.lastDrinkAt > windowStart
+        ? candidate.lastDrinkAt
+        : windowStart
+    const minutesWithoutWater = (now.getTime() - lastDrinkReference.getTime()) / 60000
+
+    let targetLevel: 0 | 1 | 2 | 3 = 0
+    if (minutesWithoutWater >= 100) {
+      targetLevel = 3
+    } else if (minutesWithoutWater >= 80) {
+      targetLevel = 2
+    } else if (minutesWithoutWater >= 60) {
+      targetLevel = 1
+    }
+
+    if (targetLevel === 0 || targetLevel <= reminderLevel) {
+      if (hasNewDrink || (!candidate.lastDrinkAt && candidate.stateLastDrinkAt)) {
+        await saveHydrationState({
+          userId: candidate.userId,
+          lastDrinkAt: candidate.lastDrinkAt,
+          lastReminderLevel: reminderLevel
+        })
+      }
+      continue
+    }
+
+    const body = pickMessage(targetLevel)
+
+    const result = await sendPush({
+      tokens,
+      notification: { title: 'Bora beber água?', body },
+      data: { type: 'water_reminder', level: String(targetLevel) }
+    })
+
+    if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
+    await saveHydrationState({
+      userId: candidate.userId,
+      lastDrinkAt: candidate.lastDrinkAt,
+      lastReminderLevel: targetLevel
+    })
+    logInfo(`hydration => sent ${result.success} pushes (level ${targetLevel}) for user ${candidate.userId}`)
+  }
+}
+
 const bootstrap = async () => {
   await ensureSchema()
   initPush()
@@ -135,6 +229,14 @@ const bootstrap = async () => {
     onPostCreated: async (payload) => handlePostCreated(payload.post_id),
     onLikeCreated: async (payload) => handleLikeCreated(payload.like_id)
   })
+
+  // Checa lembretes de água periodicamente
+  const runHydration = () =>
+    processHydrationReminders().catch((err) =>
+      logError('Failed to process hydration reminders', err)
+    )
+  runHydration()
+  setInterval(runHydration, 5 * 60 * 1000)
 
   app.listen(config.port, () => {
     logInfo(`Notification service listening on :${config.port}`)

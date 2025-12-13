@@ -40,6 +40,14 @@ export type LikeSummary = {
   postType: string
 }
 
+export type HydrationCandidate = {
+  userId: string
+  userName: string
+  lastDrinkAt: Date | null
+  stateLastDrinkAt: Date | null
+  lastReminderLevel: number
+}
+
 const pool = new Pool({ connectionString: config.databaseUrl })
 
 export const ensureSchema = async () => {
@@ -105,6 +113,27 @@ export const ensureSchema = async () => {
     AFTER INSERT ON "Like"
     FOR EACH ROW
     EXECUTE FUNCTION notify_like_created();
+
+    CREATE TABLE IF NOT EXISTS hydration_reminder_state (
+      user_id TEXT PRIMARY KEY,
+      last_drink_at TIMESTAMPTZ,
+      last_reminder_level INTEGER NOT NULL DEFAULT 0,
+      updated_at TIMESTAMPTZ DEFAULT now()
+    );
+
+    CREATE OR REPLACE FUNCTION hydration_reminder_state_touch_updated_at()
+    RETURNS trigger AS $$
+    BEGIN
+      NEW.updated_at = now();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS hydration_reminder_state_set_updated_at ON hydration_reminder_state;
+    CREATE TRIGGER hydration_reminder_state_set_updated_at
+    BEFORE UPDATE ON hydration_reminder_state
+    FOR EACH ROW
+    EXECUTE FUNCTION hydration_reminder_state_touch_updated_at();
   `
 
   await pool.query(sql)
@@ -225,4 +254,58 @@ export const startDbListeners = async (listeners: DbListeners) => {
   })
 
   return client
+}
+
+export const getHydrationReminderCandidates = async (): Promise<HydrationCandidate[]> => {
+  const { rows } = await pool.query<{
+    userId: string
+    userName: string
+    lastDrinkAt: Date | null
+    stateLastDrinkAt: Date | null
+    lastReminderLevel: number
+  }>(
+    `
+    WITH devices AS (
+      SELECT DISTINCT user_id FROM notification_devices
+    )
+    SELECT u.id AS "userId",
+           u.name AS "userName",
+           MAX(w.date) FILTER (WHERE w.date >= date_trunc('day', now())) AS "lastDrinkAt",
+           hrs.last_drink_at AS "stateLastDrinkAt",
+           COALESCE(hrs.last_reminder_level, 0) AS "lastReminderLevel"
+    FROM devices d
+    INNER JOIN "User" u ON u.id = d.user_id
+    LEFT JOIN "WaterLog" w ON w."userId" = u.id AND w.date >= date_trunc('day', now())
+    LEFT JOIN hydration_reminder_state hrs ON hrs.user_id = u.id
+    GROUP BY u.id, u.name, hrs.last_drink_at, hrs.last_reminder_level
+    `
+  )
+
+  return rows.map((row) => ({
+    userId: row.userId,
+    userName: row.userName,
+    lastDrinkAt: row.lastDrinkAt ? new Date(row.lastDrinkAt) : null,
+    stateLastDrinkAt: row.stateLastDrinkAt ? new Date(row.stateLastDrinkAt) : null,
+    lastReminderLevel: row.lastReminderLevel ?? 0
+  }))
+}
+
+export const saveHydrationState = async (params: {
+  userId: string
+  lastDrinkAt: Date | null
+  lastReminderLevel: number
+}) => {
+  const { userId, lastDrinkAt, lastReminderLevel } = params
+
+  await pool.query(
+    `
+    INSERT INTO hydration_reminder_state (user_id, last_drink_at, last_reminder_level, updated_at)
+    VALUES ($1, $2, $3, now())
+    ON CONFLICT (user_id)
+    DO UPDATE SET last_drink_at = EXCLUDED.last_drink_at,
+                  last_reminder_level = EXCLUDED.last_reminder_level,
+                  updated_at = now()
+    `,
+    [userId, lastDrinkAt, lastReminderLevel]
+  )
 }
