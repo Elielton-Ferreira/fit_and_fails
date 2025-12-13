@@ -30,8 +30,8 @@ const ProfilePage = () => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    if (file.size > 3 * 1024 * 1024) {
-      setError('Use uma imagem de até 3MB.')
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Use uma imagem de até 15MB.')
       return
     }
     const reader = new FileReader()

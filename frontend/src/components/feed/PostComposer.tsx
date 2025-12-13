@@ -143,8 +143,8 @@ const PostComposer = ({ onCreated, onPublished }: { onCreated: (post: Post) => v
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Arquivo maior que 5MB. Escolha outro.')
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Arquivo maior que 15MB. Escolha outro.')
       return
     }
     const reader = new FileReader()

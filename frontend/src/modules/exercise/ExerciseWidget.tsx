@@ -73,8 +73,8 @@ const ExerciseWidget = () => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setMediaError('Arquivo maior que 5MB. Selecione algo menor.')
+    if (file.size > 15 * 1024 * 1024) {
+      setMediaError('Arquivo maior que 15MB. Selecione algo menor.')
       return
     }
     const reader = new FileReader()
