@@ -14,11 +14,56 @@ firebase.initializeApp({
 const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
-  const notification = payload.notification || {}
-  const title = notification.title || 'Notificação'
+  // Se o payload já vem com `notification`, o FCM pode exibir automaticamente no browser.
+  // Mostrar manualmente aqui pode gerar duplicidade.
+  if (payload.notification) return
+
+  const data = payload.data || {}
+  const title = data.title || 'Fit & Fails'
+  const body = data.body || 'Nova atualização'
   const options = {
-    body: notification.body,
-    data: payload.data || {}
+    body,
+    data,
+    tag: data.postId ? `post-${data.postId}` : undefined,
+    renotify: false
   }
   self.registration.showNotification(title, options)
+})
+
+const resolveNotificationData = (raw) => {
+  if (!raw) return {}
+  // Para notificações geradas automaticamente pelo FCM, o payload pode vir aninhado.
+  if (raw.FCM_MSG && raw.FCM_MSG.data) return raw.FCM_MSG.data
+  if (raw.data && typeof raw.data === 'object') return raw.data
+  return raw
+}
+
+const resolveTargetUrl = (data) => {
+  if (!data) return '/dashboard#feed'
+  if (data.url) return data.url
+  if (data.postId) return `/dashboard#post-${data.postId}`
+  if (data.type === 'water_reminder') return '/water'
+  return '/dashboard#feed'
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const data = resolveNotificationData(event.notification.data)
+  const target = resolveTargetUrl(data)
+  const url = new URL(target, self.location.origin).href
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          if ('navigate' in client) {
+            return client.navigate(url).then(() => client.focus())
+          }
+          return client.focus()
+        }
+      }
+      return clients.openWindow(url)
+    })
+  )
 })

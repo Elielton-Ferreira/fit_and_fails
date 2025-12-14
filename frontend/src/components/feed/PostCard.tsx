@@ -80,6 +80,7 @@ const PostCard = ({
   return (
     <>
       <article
+      id={`post-${post.id}`}
       className={[
         'glass-panel rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.4)]',
         isLight ? 'border border-slate-200 bg-white text-slate-900' : 'border border-white/10 bg-white/5 text-slate-100'

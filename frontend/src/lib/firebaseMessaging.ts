@@ -15,6 +15,19 @@ const firebaseConfig = {
 let messagingInstance: Messaging | null = null
 let foregroundListenerAttached = false
 
+const resolveTargetUrl = (data?: Record<string, unknown>) => {
+  if (!data) return '/dashboard#feed'
+
+  const maybeUrl = data.url
+  if (typeof maybeUrl === 'string' && maybeUrl) return maybeUrl
+
+  const maybePostId = data.postId
+  if (typeof maybePostId === 'string' && maybePostId) return `/dashboard#post-${maybePostId}`
+
+  if (data.type === 'water_reminder') return '/water'
+  return '/dashboard#feed'
+}
+
 const ensureFirebase = () => {
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId) throw new Error('Firebase config faltando no frontend')
   if (!getApps().length) {
@@ -61,12 +74,25 @@ export const setupForegroundNotifications = async () => {
   foregroundListenerAttached = true
 
   onMessage(messaging, (payload) => {
+    const data = payload.data || {}
     const notification = payload.notification || {}
-    const title = notification.title || 'Fit & Fails'
-    const body = notification.body || 'Nova atualização'
+    const title = notification.title || data.title || 'Fit & Fails'
+    const body = notification.body || data.body || 'Nova atualização'
     if (Notification.permission === 'granted') {
       // Mostra uma notificação simples quando a aba está em foco
-      new Notification(title, { body, data: payload.data })
+      const target = resolveTargetUrl(data)
+      const notif = new Notification(title, {
+        body,
+        data,
+        tag: data.postId ? `post-${data.postId}` : undefined,
+        renotify: false
+      })
+
+      notif.onclick = () => {
+        notif.close()
+        window.focus()
+        window.location.assign(target)
+      }
     }
   })
 }

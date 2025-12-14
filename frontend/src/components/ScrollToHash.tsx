@@ -18,7 +18,20 @@ const ScrollToHash = () => {
     }
 
     if (scroll()) return
-    const timeout = window.setTimeout(scroll, 200)
+
+    let attempts = 0
+    const maxAttempts = 25
+    const intervalMs = 200
+    let timeout: number | undefined
+
+    const tick = () => {
+      if (scroll()) return
+      attempts += 1
+      if (attempts >= maxAttempts) return
+      timeout = window.setTimeout(tick, intervalMs)
+    }
+
+    timeout = window.setTimeout(tick, intervalMs)
     return () => window.clearTimeout(timeout)
   }, [location.hash, location.pathname])
 
@@ -26,4 +39,3 @@ const ScrollToHash = () => {
 }
 
 export default ScrollToHash
-
