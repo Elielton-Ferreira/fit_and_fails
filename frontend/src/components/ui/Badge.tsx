@@ -25,7 +25,13 @@ const Badge = ({ label, icon, variant = 'info', className }: BadgeProps) => {
   const { theme } = useTheme()
   const palette = theme === 'light' ? lightColors : darkColors
   return (
-    <span className={clsx('inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold', palette[variant], className)}>
+    <span
+      className={clsx(
+        'inline-flex w-fit max-w-full items-center gap-1 break-words rounded-full px-3 py-1 text-xs font-semibold',
+        palette[variant],
+        className
+      )}
+    >
       {icon}
       {label}
     </span>
