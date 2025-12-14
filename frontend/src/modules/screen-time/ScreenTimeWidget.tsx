@@ -6,6 +6,7 @@ import Badge from '../../components/ui/Badge'
 import { Book, BookLog } from '../../types'
 import IconCamera from '../../components/icons/IconCamera'
 import { useAuth } from '../auth/AuthContext'
+import { prepareImageForUpload } from '../../lib/media'
 
 const IconGallery = () => (
   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-sky-200">
@@ -34,7 +35,8 @@ const ScreenTimeWidget = () => {
   const [pagesRead, setPagesRead] = useState<string>('') // string para permitir vazio no mobile
   const [date, setDate] = useState(() => todayLocal())
   const [showBookForm, setShowBookForm] = useState(false)
-  const [mediaUrl, setMediaUrl] = useState('')
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState('')
   const [mediaLabel, setMediaLabel] = useState('')
   const [mediaError, setMediaError] = useState('')
   const galleryInputRef = useRef<HTMLInputElement | null>(null)
@@ -56,7 +58,7 @@ const ScreenTimeWidget = () => {
         setSelectedBookId((prev) => prev ?? bookRes.data[0].id)
       }
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Não foi possível carregar livros.')
+      setError(err?.message || 'Não foi possível carregar livros.')
     }
   }, [token])
 
@@ -79,7 +81,7 @@ const ScreenTimeWidget = () => {
       setMessage('Livro salvo ✅')
       setTimeout(() => setMessage(''), 2000)
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Não foi possível salvar o livro.')
+      setError(err?.message || 'Não foi possível salvar o livro.')
     } finally {
       setLoading(false)
     }
@@ -98,7 +100,7 @@ const ScreenTimeWidget = () => {
       setMessage('Livro atualizado ✅')
       setTimeout(() => setMessage(''), 2000)
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Não foi possível atualizar o livro.')
+      setError(err?.message || 'Não foi possível atualizar o livro.')
     } finally {
       setLoading(false)
     }
@@ -113,10 +115,20 @@ const ScreenTimeWidget = () => {
       setLogs((prev) => prev.filter((l) => l.bookId !== book.id))
       if (selectedBookId === book.id) setSelectedBookId(null)
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Não foi possível excluir.')
+      setError(err?.message || 'Não foi possível excluir.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const clearMedia = () => {
+    setMediaFile(null)
+    setMediaLabel('')
+    setMediaError('')
+    setMediaPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return ''
+    })
   }
 
   const handleLog = async () => {
@@ -131,23 +143,28 @@ const ScreenTimeWidget = () => {
     }
     setLoading(true)
     try {
+      setError('')
+      setMediaError('')
+      let imageUrl: string | undefined
+      if (mediaFile) {
+        const prepared = await prepareImageForUpload(mediaFile)
+        imageUrl = prepared.dataUrl
+      }
       const { data } = await api.post<BookLog>(`/books/${selectedBookId}/logs`, {
         pages,
         date: `${date}T12:00:00`,
         shareToFeed: true,
-        imageUrl: mediaUrl || undefined
+        imageUrl
       })
       setLogs((prev) => [data, ...prev])
       setPagesRead('')
       setMessage('Leitura registrada 📚')
       setTimeout(() => setMessage(''), 1500)
-      setMediaUrl('')
-      setMediaLabel('')
-      setMediaError('')
+      clearMedia()
       // redireciona para o feed
       navigate('/dashboard#feed')
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Não foi possível registrar.')
+      setError(err?.message || 'Não foi possível registrar.')
     } finally {
       setLoading(false)
     }
@@ -155,18 +172,23 @@ const ScreenTimeWidget = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setMediaError('Selecione uma imagem válida.')
+      return
+    }
     if (file.size > 15 * 1024 * 1024) {
       setMediaError('Arquivo maior que 15MB. Selecione algo menor.')
       return
     }
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setMediaUrl(String(reader.result))
-      setMediaLabel(file.name)
-      setMediaError('')
-    }
-    reader.readAsDataURL(file)
+    setMediaError('')
+    setMediaFile(file)
+    setMediaLabel(file.name)
+    setMediaPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
   }
 
   const totalThisWeek = useMemo(() => {
@@ -279,16 +301,15 @@ const ScreenTimeWidget = () => {
                   <IconCamera className="h-10 w-10 text-sky-200" />
                 </button>
               </div>
-              {mediaUrl && (
+              {mediaPreviewUrl && (
                 <div className="mt-3 flex flex-col items-center gap-2">
                   <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                    <img src={mediaUrl} alt="Prévia da leitura" className="h-40 w-40 object-cover" />
+                    <img src={mediaPreviewUrl} alt="Prévia da leitura" className="h-40 w-40 object-cover" />
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      setMediaUrl('')
-                      setMediaLabel('')
+                      clearMedia()
                     }}
                     className="text-xs text-slate-300 underline"
                   >

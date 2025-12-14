@@ -5,12 +5,14 @@ import App from './App'
 import './styles/index.css'
 import { AuthProvider } from './modules/auth/AuthContext'
 import { ThemeProvider } from './modules/theme/ThemeProvider'
+import ScrollToHash from './components/ScrollToHash'
 
 const container = document.getElementById('root') as HTMLElement
 
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <BrowserRouter>
+      <ScrollToHash />
       <ThemeProvider>
         <AuthProvider>
           <App />

@@ -5,6 +5,7 @@ import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import { ExerciseSession } from '../../types'
 import { useTheme } from '../theme/ThemeProvider'
+import { prepareImageForUpload } from '../../lib/media'
 
 const ExerciseWidget = () => {
   const navigate = useNavigate()
@@ -12,7 +13,8 @@ const ExerciseWidget = () => {
   const [type, setType] = useState('Caminhada')
   const [duration, setDuration] = useState(30)
   const [notes, setNotes] = useState('')
-  const [mediaUrl, setMediaUrl] = useState('')
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState('')
   const [share, setShare] = useState(true)
   const [sessions, setSessions] = useState<ExerciseSession[]>([])
   const [history, setHistory] = useState<ExerciseSession[]>([])
@@ -21,17 +23,23 @@ const ExerciseWidget = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [mediaError, setMediaError] = useState('')
   const [mediaLabel, setMediaLabel] = useState('')
+  const [error, setError] = useState('')
   const durationPresets = [15, 30, 45, 60]
   const [showTypeForm, setShowTypeForm] = useState(false)
   const [monthOffset, setMonthOffset] = useState(0)
   const [loading, setLoading] = useState(false)
 
   const fetchSessions = useCallback(async () => {
-    const { data } = await api.get('/exercises', { params: { limit: 6, days: 60 } })
-    setSessions(data.slice(0, 4))
-    setHistory(data)
-    const typesFromHistory = Array.from(new Set(data.map((s) => s.type)))
-    setTypes((prev) => Array.from(new Set([...prev, ...typesFromHistory, loadCustomTypes()].flat())))
+    try {
+      setError('')
+      const { data } = await api.get('/exercises', { params: { limit: 6, days: 60 } })
+      setSessions(data.slice(0, 4))
+      setHistory(data)
+      const typesFromHistory = Array.from(new Set(data.map((s) => s.type)))
+      setTypes((prev) => Array.from(new Set([...prev, ...typesFromHistory, loadCustomTypes()].flat())))
+    } catch (err: any) {
+      setError(err?.message || 'Não foi possível carregar seus treinos.')
+    }
   }, [])
 
   useEffect(() => {
@@ -47,24 +55,32 @@ const ExerciseWidget = () => {
     if (loading) return
     const startTime = new Date()
     const endTime = new Date(startTime.getTime() + duration * 60000)
-    const payload = {
-      type,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      notes,
-      mediaUrls: mediaUrl ? [mediaUrl] : undefined,
-      shareToFeed: share
-    }
     try {
       setLoading(true)
+      setError('')
+      setMediaError('')
+      let imageUrl: string | undefined
+      if (mediaFile) {
+        const prepared = await prepareImageForUpload(mediaFile)
+        imageUrl = prepared.dataUrl
+      }
+      const payload = {
+        type,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        notes,
+        mediaUrls: imageUrl ? [imageUrl] : undefined,
+        shareToFeed: share
+      }
       const { data } = await api.post('/exercises', payload)
       setSessions((prev) => [data, ...prev].slice(0, 4))
       setHistory((prev) => [data, ...prev])
       setNotes('')
-      setMediaUrl('')
-      setMediaLabel('')
+      clearMedia()
       // direciona ao feed como na tela de livros
       navigate('/dashboard#feed')
+    } catch (err: any) {
+      setError(err?.message || 'Não foi possível registrar seu treino.')
     } finally {
       setLoading(false)
     }
@@ -72,18 +88,35 @@ const ExerciseWidget = () => {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
-    if (file.size > 15 * 1024 * 1024) {
-      setMediaError('Arquivo maior que 15MB. Selecione algo menor.')
+    if (!file.type.startsWith('image/')) {
+      setMediaError('Selecione uma imagem válida.')
       return
     }
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setMediaUrl(String(reader.result))
-      setMediaError('')
-      setMediaLabel(file.name)
+    if (file.size > 15 * 1024 * 1024) {
+      setMediaError('Arquivo maior que 15MB. Selecione algo menor.')
+      setMediaFile(null)
+      setMediaLabel('')
+      return
     }
-    reader.readAsDataURL(file)
+    setMediaError('')
+    setMediaFile(file)
+    setMediaLabel(file.name)
+    setMediaPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
+  const clearMedia = () => {
+    setMediaFile(null)
+    setMediaLabel('')
+    setMediaError('')
+    setMediaPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return ''
+    })
   }
 
   const addCustomType = () => {
@@ -164,6 +197,8 @@ const ExerciseWidget = () => {
         </div>
       </header>
 
+      {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
+
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="grid gap-4 lg:grid-cols-4">
           <div className="space-y-3">
@@ -235,16 +270,15 @@ const ExerciseWidget = () => {
                 <IconCamera />
               </button>
             </div>
-            {mediaUrl && (
+            {mediaPreviewUrl && (
               <div className="mt-3 flex flex-col items-center gap-2">
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                  <img src={mediaUrl} alt="Prévia do treino" className="h-40 w-40 object-cover" />
+                  <img src={mediaPreviewUrl} alt="Prévia do treino" className="h-40 w-40 object-cover" />
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setMediaUrl('')
-                    setMediaLabel('')
+                    clearMedia()
                   }}
                   className="text-xs text-slate-300 underline"
                 >
