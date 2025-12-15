@@ -26,7 +26,6 @@ export type PostSummary = {
   postId: string
   authorId: string
   authorName: string
-  authorAvatarUrl: string | null
   type: string
   text: string | null
 }
@@ -35,7 +34,6 @@ export type LikeSummary = {
   likeId: string
   likerId: string
   likerName: string
-  likerAvatarUrl: string | null
   postId: string
   postOwnerId: string
   postOwnerName: string
@@ -197,7 +195,6 @@ export const fetchPostSummary = async (postId: string): Promise<PostSummary | nu
     `SELECT p.id AS "postId",
             p."userId" AS "authorId",
             u.name AS "authorName",
-            u."avatarUrl" AS "authorAvatarUrl",
             p.type,
             p.text
      FROM "Post" p
@@ -214,7 +211,6 @@ export const fetchLikeSummary = async (likeId: string): Promise<LikeSummary | nu
     `SELECT l.id AS "likeId",
             l."userId" AS "likerId",
             liker.name AS "likerName",
-            liker."avatarUrl" AS "likerAvatarUrl",
             l."postId" AS "postId",
             p."userId" AS "postOwnerId",
             owner.name AS "postOwnerName",

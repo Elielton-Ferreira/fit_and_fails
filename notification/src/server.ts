@@ -112,7 +112,7 @@ const handlePostCreated = async (postId: string) => {
 
   const body = `${summary.authorName} ${postTypeLabels[summary.type] ?? 'compartilhou uma nova postagem'}`
   const url = `/dashboard#post-${summary.postId}`
-  const icon = summary.authorAvatarUrl || '/icon.svg'
+  const icon = `/api/users/${summary.authorId}/avatar`
 
   const result = await sendPush({
     tokens,
@@ -154,7 +154,7 @@ const handleLikeCreated = async (likeId: string) => {
 
   const body = `${summary.likerName} curtiu seu post`
   const url = `/dashboard#post-${summary.postId}`
-  const icon = summary.likerAvatarUrl || '/icon.svg'
+  const icon = `/api/users/${summary.likerId}/avatar`
 
   const result = await sendPush({
     tokens,

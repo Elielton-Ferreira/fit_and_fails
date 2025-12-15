@@ -1,6 +1,24 @@
 import { Request, Response } from 'express'
 import userRepository from '../repositories/userRepository'
 
+const makeInitialsSvg = (name?: string) => {
+  const initial = (name || 'F').trim().slice(0, 1).toUpperCase() || 'F'
+  const bg = '#0ea5e9'
+  const fg = '#ffffff'
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Avatar">
+  <rect width="128" height="128" rx="64" fill="${bg}"/>
+  <text x="64" y="78" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="64" font-weight="700" fill="${fg}">${initial}</text>
+</svg>`
+  return svg
+}
+
+const tryParseDataUrl = (value: string) => {
+  const match = value.match(/^data:([^;]+);base64,(.+)$/)
+  if (!match) return null
+  return { mime: match[1], base64: match[2] }
+}
+
 export async function me(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
@@ -23,5 +41,41 @@ export async function update(req: Request, res: Response) {
     return res.json({ id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl })
   } catch (err: any) {
     return res.status(400).json({ error: err.message })
+  }
+}
+
+export async function avatar(req: Request, res: Response) {
+  try {
+    const { userId } = req.params as { userId?: string }
+    if (!userId) return res.status(400).json({ error: 'userId é obrigatório' })
+
+    const user = await userRepository.findById(userId)
+    const avatarUrl = user?.avatarUrl
+
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+
+    if (!avatarUrl) {
+      res.setHeader('Content-Type', 'image/svg+xml')
+      return res.send(makeInitialsSvg(user?.name))
+    }
+
+    // Data URL (base64)
+    if (avatarUrl.startsWith('data:')) {
+      const parsed = tryParseDataUrl(avatarUrl)
+      if (!parsed) return res.status(400).json({ error: 'avatarUrl inválido' })
+      const buffer = Buffer.from(parsed.base64, 'base64')
+      res.setHeader('Content-Type', parsed.mime)
+      return res.send(buffer)
+    }
+
+    // URL externa
+    if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+      return res.redirect(302, avatarUrl)
+    }
+
+    // Qualquer outra string: tenta usar como path/URL
+    return res.redirect(302, avatarUrl)
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message })
   }
 }
