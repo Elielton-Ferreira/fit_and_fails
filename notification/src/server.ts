@@ -31,7 +31,7 @@ app.use(express.json())
 
 const postTypeLabels: Record<string, string> = {
   water: 'compartilhou uma boa hidratação',
-  screen_time: 'compartilhou tempo de tela',
+  screen_time: 'compartilhou leitura',
   exercise: 'compartilhou exercícios',
   shame: 'fez um post da vergonha',
   healthy_food: 'compartilhou uma boa refeição',
@@ -111,11 +111,28 @@ const handlePostCreated = async (postId: string) => {
   }
 
   const body = `${summary.authorName} ${postTypeLabels[summary.type] ?? 'compartilhou uma nova postagem'}`
+  const url = `/dashboard#post-${summary.postId}`
+  const icon = summary.authorAvatarUrl || '/icon.svg'
 
   const result = await sendPush({
     tokens,
     notification: { title: 'Nova postagem no Fit & Fails', body },
-    data: { type: 'post_created', postId: summary.postId, authorId: summary.authorId }
+    data: {
+      type: 'post_created',
+      postId: summary.postId,
+      authorId: summary.authorId,
+      url,
+      icon,
+      title: 'Nova postagem no Fit & Fails',
+      body
+    },
+    webpush: {
+      notification: {
+        title: 'Nova postagem no Fit & Fails',
+        body,
+        icon
+      }
+    }
   })
 
   if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
@@ -135,15 +152,30 @@ const handleLikeCreated = async (likeId: string) => {
     return
   }
 
+  const body = `${summary.likerName} curtiu seu post`
+  const url = `/dashboard#post-${summary.postId}`
+  const icon = summary.likerAvatarUrl || '/icon.svg'
+
   const result = await sendPush({
     tokens,
-    notification: { title: 'Novo like no seu post', body: `${summary.likerName} curtiu seu post` },
+    notification: { title: 'Novo like no seu post', body },
     data: {
       type: 'like_created',
       postId: summary.postId,
       likerId: summary.likerId,
       postOwnerId: summary.postOwnerId,
-      postType: summary.postType
+      postType: summary.postType,
+      url,
+      icon,
+      title: 'Novo like no seu post',
+      body
+    },
+    webpush: {
+      notification: {
+        title: 'Novo like no seu post',
+        body,
+        icon
+      }
     }
   })
 
@@ -204,11 +236,20 @@ const processHydrationReminders = async () => {
     }
 
     const body = pickMessage(targetLevel)
+    const icon = '/notification-water.svg'
+    const url = '/water'
 
     const result = await sendPush({
       tokens,
       notification: { title: 'Bora beber água?', body },
-      data: { type: 'water_reminder', level: String(targetLevel) }
+      data: { type: 'water_reminder', level: String(targetLevel), icon, url, title: 'Bora beber água?', body },
+      webpush: {
+        notification: {
+          title: 'Bora beber água?',
+          body,
+          icon
+        }
+      }
     })
 
     if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)

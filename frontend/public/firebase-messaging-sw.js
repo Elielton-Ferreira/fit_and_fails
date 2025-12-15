@@ -21,9 +21,11 @@ messaging.onBackgroundMessage((payload) => {
   const data = payload.data || {}
   const title = data.title || 'Fit & Fails'
   const body = data.body || 'Nova atualização'
+  const icon = data.icon || (data.type === 'water_reminder' ? '/notification-water.svg' : undefined)
   const options = {
     body,
     data,
+    icon,
     tag: data.postId ? `post-${data.postId}` : undefined,
     renotify: false
   }

@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
+import type { WebpushConfig } from 'firebase-admin/messaging'
 import { config } from './config.js'
 import { logError, logInfo } from './logger.js'
 
@@ -7,6 +8,7 @@ type PushPayload = {
   tokens: string[]
   notification: { title: string; body: string }
   data?: Record<string, string>
+  webpush?: WebpushConfig
 }
 
 type PushResult = {
@@ -52,7 +54,7 @@ const chunk = <T>(items: T[], size: number): T[][] => {
   return result
 }
 
-export const sendPush = async ({ tokens, notification, data }: PushPayload): Promise<PushResult> => {
+export const sendPush = async ({ tokens, notification, data, webpush }: PushPayload): Promise<PushResult> => {
   if (!pushReady) return { success: 0, failure: tokens.length, invalidTokens: [] }
   if (tokens.length === 0) return { success: 0, failure: 0, invalidTokens: [] }
 
@@ -66,7 +68,8 @@ export const sendPush = async ({ tokens, notification, data }: PushPayload): Pro
       const response = await messaging.sendEachForMulticast({
         tokens: batch,
         notification,
-        data
+        data,
+        webpush
       })
 
       success += response.successCount

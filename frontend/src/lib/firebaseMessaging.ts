@@ -81,9 +81,11 @@ export const setupForegroundNotifications = async () => {
     if (Notification.permission === 'granted') {
       // Mostra uma notificação simples quando a aba está em foco
       const target = resolveTargetUrl(data)
+      const icon = data.icon || (data.type === 'water_reminder' ? '/notification-water.svg' : undefined)
       const notif = new Notification(title, {
         body,
         data,
+        icon,
         tag: data.postId ? `post-${data.postId}` : undefined,
         renotify: false
       })
