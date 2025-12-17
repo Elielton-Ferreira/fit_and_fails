@@ -19,7 +19,7 @@ RUN npm config set fetch-retries 5 \
 COPY . .
 RUN npm run build
 
-FROM nginx:1.25-alpine
+FROM public.ecr.aws/docker/library/nginx:1.25-alpine
 WORKDIR /usr/share/nginx/html
 
 # Ajusta timezone também na imagem final usada em produção
