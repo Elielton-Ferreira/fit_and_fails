@@ -15,6 +15,23 @@ const firebaseConfig = {
 let messagingInstance: Messaging | null = null
 let foregroundListenerAttached = false
 
+const DEVICE_ID_KEY = 'fit-and-fails-device-id'
+
+const getDeviceId = () => {
+  try {
+    const existing = localStorage.getItem(DEVICE_ID_KEY)
+    if (existing) return existing
+    const generated =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    localStorage.setItem(DEVICE_ID_KEY, generated)
+    return generated
+  } catch {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+}
+
 const resolveTargetUrl = (data?: Record<string, unknown>) => {
   if (!data) return '/dashboard#feed'
 
@@ -58,9 +75,12 @@ export const registerPushDevice = async (userId: string) => {
 
   if (!token) throw new Error('Não foi possível obter token de push')
 
+  const deviceId = getDeviceId()
+
   await notificationApi.post('/devices', {
     userId,
     token,
+    deviceId,
     platform: 'web',
     appVersion: 'web'
   })

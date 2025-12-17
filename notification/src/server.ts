@@ -22,6 +22,7 @@ type NotificationType = 'post_created' | 'like_created' | 'comment_created'
 type DeviceRequest = {
   userId: string
   token: string
+  deviceId?: string
   platform: 'android' | 'ios' | 'web'
   appVersion?: string
 }
@@ -54,7 +55,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.post('/devices', async (req, res) => {
-  const { userId, token, platform, appVersion } = req.body as DeviceRequest
+  const { userId, token, deviceId, platform, appVersion } = req.body as DeviceRequest
 
   if (!userId || !token || !platform) {
     return res.status(400).json({ error: 'userId, token e platform são obrigatórios' })
@@ -64,7 +65,7 @@ app.post('/devices', async (req, res) => {
     return res.status(400).json({ error: 'platform deve ser android, ios ou web' })
   }
 
-  await upsertDevice({ userId, token, platform, appVersion })
+  await upsertDevice({ userId, token, deviceId, platform, appVersion })
   res.json({ ok: true })
 })
 

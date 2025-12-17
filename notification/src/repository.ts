@@ -75,12 +75,19 @@ export const ensureSchema = async () => {
       id BIGSERIAL PRIMARY KEY,
       user_id TEXT NOT NULL,
       token TEXT NOT NULL UNIQUE,
+      device_id TEXT,
       platform TEXT NOT NULL CHECK (platform IN ('android', 'ios', 'web')),
       app_version TEXT,
       created_at TIMESTAMPTZ DEFAULT now(),
       updated_at TIMESTAMPTZ DEFAULT now(),
       last_seen_at TIMESTAMPTZ DEFAULT now()
     );
+
+    ALTER TABLE notification_devices
+      ADD COLUMN IF NOT EXISTS device_id TEXT;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS notification_devices_user_platform_device_unique
+      ON notification_devices (user_id, platform, device_id);
 
     CREATE OR REPLACE FUNCTION notification_devices_touch_updated_at()
     RETURNS trigger AS $$
@@ -181,10 +188,44 @@ export const ensureSchema = async () => {
 export const upsertDevice = async (params: {
   userId: string
   token: string
+  deviceId?: string
   platform: Platform
   appVersion?: string
 }) => {
-  const { userId, token, platform, appVersion } = params
+  const { userId, token, deviceId, platform, appVersion } = params
+
+  if (deviceId) {
+    const client = await pool.connect()
+    try {
+      await client.query('BEGIN')
+
+      await client.query('DELETE FROM notification_devices WHERE token = $1', [token])
+
+      await client.query(
+        `INSERT INTO notification_devices (user_id, token, device_id, platform, app_version, last_seen_at)
+         VALUES ($1, $2, $3, $4, $5, now())
+         ON CONFLICT (user_id, platform, device_id)
+         DO UPDATE SET token = EXCLUDED.token,
+                       app_version = EXCLUDED.app_version,
+                       last_seen_at = now(),
+                       updated_at = now()`,
+        [userId, token, deviceId, platform, appVersion ?? null]
+      )
+
+      await client.query(
+        'DELETE FROM notification_devices WHERE user_id = $1 AND platform = $2 AND device_id IS NULL',
+        [userId, platform]
+      )
+
+      await client.query('COMMIT')
+    } catch (err) {
+      await client.query('ROLLBACK')
+      throw err
+    } finally {
+      client.release()
+    }
+    return
+  }
 
   await pool.query(
     `INSERT INTO notification_devices (user_id, token, platform, app_version, last_seen_at)
@@ -214,7 +255,25 @@ export const getTokensForBroadcast = async (excludeUserId?: string) => {
   }
 
   const { rows } = await pool.query<{ token: string }>(
-    `SELECT token FROM notification_devices ${where}`,
+    `
+    WITH base AS (
+      SELECT user_id, platform, token, device_id, last_seen_at, updated_at, created_at
+      FROM notification_devices
+      ${where}
+    ),
+    modern AS (
+      SELECT token FROM base WHERE device_id IS NOT NULL
+    ),
+    legacy AS (
+      SELECT DISTINCT ON (user_id, platform) token
+      FROM base
+      WHERE device_id IS NULL
+      ORDER BY user_id, platform, last_seen_at DESC, updated_at DESC, created_at DESC
+    )
+    SELECT token FROM modern
+    UNION ALL
+    SELECT token FROM legacy
+    `,
     params
   )
   return rows.map((r) => r.token)
@@ -222,7 +281,17 @@ export const getTokensForBroadcast = async (excludeUserId?: string) => {
 
 export const getTokensForUser = async (userId: string) => {
   const { rows } = await pool.query<{ token: string }>(
-    'SELECT token FROM notification_devices WHERE user_id = $1',
+    `
+    SELECT token FROM notification_devices
+    WHERE user_id = $1 AND device_id IS NOT NULL
+    UNION ALL
+    SELECT token FROM (
+      SELECT DISTINCT ON (platform) token
+      FROM notification_devices
+      WHERE user_id = $1 AND device_id IS NULL
+      ORDER BY platform, last_seen_at DESC, updated_at DESC, created_at DESC
+    ) legacy
+    `,
     [userId]
   )
   return rows.map((r) => r.token)
