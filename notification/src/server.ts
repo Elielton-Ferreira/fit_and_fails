@@ -44,9 +44,9 @@ const ANDROID_VIBRATE = [0, 200, 100, 200]
 
 const hydrationReminderBody = (userName: string, level: 1 | 2 | 3) => {
   const name = userName?.trim() || 'Ei'
-  if (level === 1) return `${name} faz 60 min que vc registrou ultima hidratação`
-  if (level === 2) return `${name} faz 1h 30 min que vc registrou ultima hidratação`
-  return `${name} faz 2h que vc registrou ultima hidratação`
+  if (level === 1) return `${name}, 60 min desde sua última hidratação💧\nQue tal um hidratar agora?`
+  if (level === 2) return `${name}, 1h30 sem água, vc não é um Cactus🌵\nBora hidratar!`
+  return `${name}, 2h sem água, a próxima é o rim reclamando 😅\nVamos hidratar!!!`
 }
 
 app.get('/health', (_req, res) => {
