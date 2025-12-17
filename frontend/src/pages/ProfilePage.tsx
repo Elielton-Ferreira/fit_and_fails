@@ -85,6 +85,12 @@ const ProfilePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
+  const formatImage = (image?: string) => {
+    if (!image) return '—'
+    const parts = image.split('/')
+    return parts[parts.length - 1] || image
+  }
+
   const loadUsers = async () => {
     try {
       setAdminLoading(true)
@@ -235,19 +241,19 @@ const ProfilePage = () => {
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Frontend</span>
-                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.frontend || '—'}</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{formatImage(versions?.images?.frontend)}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Backend</span>
-                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.backend || '—'}</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{formatImage(versions?.images?.backend)}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Notification</span>
-                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.notification || '—'}</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{formatImage(versions?.images?.notification)}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Postgres</span>
-                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.postgres || '—'}</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{formatImage(versions?.images?.postgres)}</span>
               </div>
               {versions?.postgresServerVersion && (
                 <p className="pt-2 text-xs text-slate-400">

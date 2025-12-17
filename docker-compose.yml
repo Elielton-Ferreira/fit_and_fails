@@ -32,6 +32,8 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
+      # Used by /api/system/versions to detect running image tags
+      - /var/run/docker.sock:/var/run/docker.sock
     command: npm run dev
 
   notification:
