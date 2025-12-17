@@ -17,9 +17,17 @@ type LikeCreatedPayload = {
   user_id: string
 }
 
+type CommentCreatedPayload = {
+  comment_id: string
+  post_id: string
+  user_id: string
+  created_at?: string
+}
+
 type DbListeners = {
   onPostCreated: (payload: PostCreatedPayload) => Promise<void>
   onLikeCreated: (payload: LikeCreatedPayload) => Promise<void>
+  onCommentCreated: (payload: CommentCreatedPayload) => Promise<void>
 }
 
 export type PostSummary = {
@@ -34,6 +42,17 @@ export type LikeSummary = {
   likeId: string
   likerId: string
   likerName: string
+  postId: string
+  postOwnerId: string
+  postOwnerName: string
+  postType: string
+}
+
+export type CommentSummary = {
+  commentId: string
+  commentText: string
+  commenterId: string
+  commenterName: string
   postId: string
   postOwnerId: string
   postOwnerName: string
@@ -108,11 +127,30 @@ export const ensureSchema = async () => {
     END;
     $$ LANGUAGE plpgsql;
 
-    DROP TRIGGER IF EXISTS like_created_notify ON "Like";
-    CREATE TRIGGER like_created_notify
-    AFTER INSERT ON "Like"
-    FOR EACH ROW
-    EXECUTE FUNCTION notify_like_created();
+	    DROP TRIGGER IF EXISTS like_created_notify ON "Like";
+	    CREATE TRIGGER like_created_notify
+	    AFTER INSERT ON "Like"
+	    FOR EACH ROW
+	    EXECUTE FUNCTION notify_like_created();
+
+	    CREATE OR REPLACE FUNCTION notify_comment_created()
+	    RETURNS trigger AS $$
+	    BEGIN
+	      PERFORM pg_notify('comment_created', json_build_object(
+	        'comment_id', NEW.id,
+	        'post_id', NEW."postId",
+	        'user_id', NEW."userId",
+	        'created_at', NEW."createdAt"
+	      )::text);
+	      RETURN NEW;
+	    END;
+	    $$ LANGUAGE plpgsql;
+
+	    DROP TRIGGER IF EXISTS comment_created_notify ON "Comment";
+	    CREATE TRIGGER comment_created_notify
+	    AFTER INSERT ON "Comment"
+	    FOR EACH ROW
+	    EXECUTE FUNCTION notify_comment_created();
 
     CREATE TABLE IF NOT EXISTS hydration_reminder_state (
       user_id TEXT PRIMARY KEY,
@@ -226,12 +264,34 @@ export const fetchLikeSummary = async (likeId: string): Promise<LikeSummary | nu
   return rows[0] ?? null
 }
 
+export const fetchCommentSummary = async (commentId: string): Promise<CommentSummary | null> => {
+  const { rows } = await pool.query<CommentSummary>(
+    `SELECT c.id AS "commentId",
+            c.text AS "commentText",
+            c."userId" AS "commenterId",
+            commenter.name AS "commenterName",
+            c."postId" AS "postId",
+            p."userId" AS "postOwnerId",
+            owner.name AS "postOwnerName",
+            p.type AS "postType"
+     FROM "Comment" c
+     INNER JOIN "User" commenter ON commenter.id = c."userId"
+     INNER JOIN "Post" p ON p.id = c."postId"
+     INNER JOIN "User" owner ON owner.id = p."userId"
+     WHERE c.id = $1`,
+    [commentId]
+  )
+
+  return rows[0] ?? null
+}
+
 export const startDbListeners = async (listeners: DbListeners) => {
   const client = new Client({ connectionString: config.databaseUrl })
   await client.connect()
   await client.query('LISTEN post_created')
   await client.query('LISTEN like_created')
-  logInfo('Listening for Post/Like events from Postgres')
+  await client.query('LISTEN comment_created')
+  logInfo('Listening for Post/Like/Comment events from Postgres')
 
   client.on('notification', async (msg) => {
     if (!msg.payload) return
@@ -243,6 +303,9 @@ export const startDbListeners = async (listeners: DbListeners) => {
       }
       if (msg.channel === 'like_created') {
         await listeners.onLikeCreated(payload as LikeCreatedPayload)
+      }
+      if (msg.channel === 'comment_created') {
+        await listeners.onCommentCreated(payload as CommentCreatedPayload)
       }
     } catch (err) {
       logError(`Failed to handle notification ${msg.channel}`, err)

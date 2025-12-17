@@ -5,6 +5,7 @@ import { initPush, sendPush } from './push.js'
 import {
   deleteTokens,
   ensureSchema,
+  fetchCommentSummary,
   fetchLikeSummary,
   fetchPostSummary,
   getHydrationReminderCandidates,
@@ -16,7 +17,7 @@ import {
 } from './repository.js'
 import { logError, logInfo } from './logger.js'
 
-type NotificationType = 'post_created' | 'like_created'
+type NotificationType = 'post_created' | 'like_created' | 'comment_created'
 
 type DeviceRequest = {
   userId: string
@@ -183,6 +184,58 @@ const handleLikeCreated = async (likeId: string) => {
   logInfo(`like_created => sent ${result.success} pushes, ${result.failure} falhas`)
 }
 
+const truncate = (value: string, max: number) => {
+  const trimmed = value.trim()
+  if (trimmed.length <= max) return trimmed
+  return `${trimmed.slice(0, max - 1)}…`
+}
+
+const handleCommentCreated = async (commentId: string) => {
+  const summary = await fetchCommentSummary(commentId)
+  if (!summary) return
+  if (summary.postOwnerId === summary.commenterId) return
+
+  const tokens = await getTokensForUser(summary.postOwnerId)
+  if (!tokens.length) return
+
+  if (!config.pushEnabled || !config.firebase) {
+    logInfo('Push não configurado; evento comment_created recebido')
+    return
+  }
+
+  const commentSnippet = truncate(summary.commentText, 90)
+  const body = `${summary.commenterName}: ${commentSnippet}`
+  const url = `/dashboard#post-${summary.postId}`
+  const icon = `/api/users/${summary.commenterId}/avatar`
+
+  const result = await sendPush({
+    tokens,
+    notification: { title: 'Novo comentário no seu post', body },
+    data: {
+      type: 'comment_created',
+      postId: summary.postId,
+      commentId: summary.commentId,
+      commenterId: summary.commenterId,
+      postOwnerId: summary.postOwnerId,
+      postType: summary.postType,
+      url,
+      icon,
+      title: 'Novo comentário no seu post',
+      body
+    },
+    webpush: {
+      notification: {
+        title: 'Novo comentário no seu post',
+        body,
+        icon
+      }
+    }
+  })
+
+  if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
+  logInfo(`comment_created => sent ${result.success} pushes, ${result.failure} falhas`)
+}
+
 const processHydrationReminders = async () => {
   if (!config.pushEnabled || !config.firebase) return
 
@@ -268,7 +321,8 @@ const bootstrap = async () => {
 
   await startDbListeners({
     onPostCreated: async (payload) => handlePostCreated(payload.post_id),
-    onLikeCreated: async (payload) => handleLikeCreated(payload.like_id)
+    onLikeCreated: async (payload) => handleLikeCreated(payload.like_id),
+    onCommentCreated: async (payload) => handleCommentCreated(payload.comment_id)
   })
 
   // Checa lembretes de água periodicamente
