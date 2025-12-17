@@ -27,6 +27,8 @@ services:
       DATABASE_URL: postgres://fitandfails:${POSTGRES_PASSWORD}@db:5432/fitandfails
     ports:
       - '4000:4000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   frontend:
     image: docker.io/elieltondevopsengineer/fit_and_fails-frontend:v18

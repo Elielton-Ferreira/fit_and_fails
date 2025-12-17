@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent } from 'react'
+import { useState, useRef, ChangeEvent, useEffect } from 'react'
 import AppLayout from '../components/layout/AppLayout'
 import Button from '../components/ui/Button'
 import api from '../lib/api'
@@ -21,6 +21,13 @@ const ProfilePage = () => {
   const [info, setInfo] = useState('')
   const [error, setError] = useState('')
   const galleryRef = useRef<HTMLInputElement | null>(null)
+  const [versions, setVersions] = useState<{
+    images?: Partial<Record<'frontend' | 'backend' | 'notification' | 'postgres', string>>
+    source?: string
+    postgresServerVersion?: string | null
+  } | null>(null)
+  const [versionsLoading, setVersionsLoading] = useState(false)
+  const [versionsError, setVersionsError] = useState('')
   const [adminUsers, setAdminUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminError, setAdminError] = useState('')
@@ -58,6 +65,25 @@ const ProfilePage = () => {
 
   const adminEmails = ['elielton.gomes.ferreira@gmail.com', 'admin@example.com']
   const isAdmin = user?.email ? adminEmails.includes(user.email) : false
+
+  const loadVersions = async () => {
+    try {
+      setVersionsLoading(true)
+      setVersionsError('')
+      const { data } = await api.get('/system/versions')
+      setVersions(data)
+    } catch (err: any) {
+      setVersionsError(err.response?.data?.error || err.message)
+    } finally {
+      setVersionsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.id) return
+    loadVersions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   const loadUsers = async () => {
     try {
@@ -187,6 +213,48 @@ const ProfilePage = () => {
             <Button type="button" variant="ghost" onClick={logout} className="border border-rose-300/40 text-rose-200 hover:bg-rose-500/10">
               Sair
             </Button>
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-3xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Versão do sistema</h2>
+              <p className={`mt-1 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                {versions?.source ? `Fonte: ${versions.source}` : 'Fonte: —'}
+              </p>
+            </div>
+            <Button type="button" variant="secondary" onClick={loadVersions} disabled={versionsLoading}>
+              {versionsLoading ? 'Atualizando...' : 'Atualizar'}
+            </Button>
+          </div>
+
+          {versionsError && <p className="mt-3 text-sm text-rose-300">{versionsError}</p>}
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="grid gap-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Frontend</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.frontend || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Backend</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.backend || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Notification</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.notification || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Postgres</span>
+                <span className="max-w-[70%] break-words text-right font-mono text-white">{versions?.images?.postgres || '—'}</span>
+              </div>
+              {versions?.postgresServerVersion && (
+                <p className="pt-2 text-xs text-slate-400">
+                  {versions.postgresServerVersion}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
