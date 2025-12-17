@@ -1,6 +1,6 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
-import type { WebpushConfig } from 'firebase-admin/messaging'
+import type { AndroidConfig, ApnsConfig, WebpushConfig } from 'firebase-admin/messaging'
 import { config } from './config.js'
 import { logError, logInfo } from './logger.js'
 
@@ -8,6 +8,8 @@ type PushPayload = {
   tokens: string[]
   notification: { title: string; body: string }
   data?: Record<string, string>
+  android?: AndroidConfig
+  apns?: ApnsConfig
   webpush?: WebpushConfig
 }
 
@@ -54,7 +56,7 @@ const chunk = <T>(items: T[], size: number): T[][] => {
   return result
 }
 
-export const sendPush = async ({ tokens, notification, data, webpush }: PushPayload): Promise<PushResult> => {
+export const sendPush = async ({ tokens, notification, data, android, apns, webpush }: PushPayload): Promise<PushResult> => {
   if (!pushReady) return { success: 0, failure: tokens.length, invalidTokens: [] }
   if (tokens.length === 0) return { success: 0, failure: 0, invalidTokens: [] }
 
@@ -69,6 +71,8 @@ export const sendPush = async ({ tokens, notification, data, webpush }: PushPayl
         tokens: batch,
         notification,
         data,
+        android,
+        apns,
         webpush
       })
 

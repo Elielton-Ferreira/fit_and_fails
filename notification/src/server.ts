@@ -39,27 +39,14 @@ const postTypeLabels: Record<string, string> = {
   books: 'compartilhou leitura diária'
 }
 
-const hydrationMessages: Record<
-  1 | 2 | 3,
-  string[]
-> = {
-  1: [
-    'Ei… já faz 1 hora desde o último gole. Seu corpo está olhando pra garrafa 👀',
-    'Alô, hidratação! Já passou 1 hora… bora dar um golinho?'
-  ],
-  2: [
-    'Já faz um tempinho sem água… sua pele pediu pra avisar 😬',
-    '2ª chamada da hidratação! O copo tá te esperando'
-  ],
-  3: [
-    'ALERTA DE SEDE 🚨 Seu corpo entrou no modo economia de água!',
-    'Parabéns! Você desbloqueou o nível Deserto do Saara 🏜️'
-  ]
-}
+const WEB_VIBRATE = [200, 100, 200]
+const ANDROID_VIBRATE = [0, 200, 100, 200]
 
-const pickMessage = (level: 1 | 2 | 3) => {
-  const options = hydrationMessages[level]
-  return options[Math.floor(Math.random() * options.length)]
+const hydrationReminderBody = (userName: string, level: 1 | 2 | 3) => {
+  const name = userName?.trim() || 'Ei'
+  if (level === 1) return `${name} faz 60 min que vc registrou ultima hidratação`
+  if (level === 2) return `${name} faz 1h 30 min que vc registrou ultima hidratação`
+  return `${name} faz 2h que vc registrou ultima hidratação`
 }
 
 app.get('/health', (_req, res) => {
@@ -91,7 +78,20 @@ app.post('/test', async (req, res) => {
   const result = await sendPush({
     tokens,
     notification: { title: 'Teste de notificação', body: 'Push enviado pelo serviço de notificações' },
-    data: { type: 'test' }
+    data: { type: 'test' },
+    android: {
+      priority: 'high',
+      notification: {
+        vibrateTimingsMillis: ANDROID_VIBRATE
+      }
+    },
+    webpush: {
+      notification: {
+        title: 'Teste de notificação',
+        body: 'Push enviado pelo serviço de notificações',
+        vibrate: WEB_VIBRATE
+      }
+    }
   })
 
   if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
@@ -127,11 +127,18 @@ const handlePostCreated = async (postId: string) => {
       title: 'Nova postagem no Fit & Fails',
       body
     },
+    android: {
+      priority: 'high',
+      notification: {
+        vibrateTimingsMillis: ANDROID_VIBRATE
+      }
+    },
     webpush: {
       notification: {
         title: 'Nova postagem no Fit & Fails',
         body,
-        icon
+        icon,
+        vibrate: WEB_VIBRATE
       }
     }
   })
@@ -171,11 +178,18 @@ const handleLikeCreated = async (likeId: string) => {
       title: 'Novo like no seu post',
       body
     },
+    android: {
+      priority: 'high',
+      notification: {
+        vibrateTimingsMillis: ANDROID_VIBRATE
+      }
+    },
     webpush: {
       notification: {
         title: 'Novo like no seu post',
         body,
-        icon
+        icon,
+        vibrate: WEB_VIBRATE
       }
     }
   })
@@ -223,11 +237,18 @@ const handleCommentCreated = async (commentId: string) => {
       title: 'Novo comentário no seu post',
       body
     },
+    android: {
+      priority: 'high',
+      notification: {
+        vibrateTimingsMillis: ANDROID_VIBRATE
+      }
+    },
     webpush: {
       notification: {
         title: 'Novo comentário no seu post',
         body,
-        icon
+        icon,
+        vibrate: WEB_VIBRATE
       }
     }
   })
@@ -269,9 +290,9 @@ const processHydrationReminders = async () => {
     const minutesWithoutWater = (now.getTime() - lastDrinkReference.getTime()) / 60000
 
     let targetLevel: 0 | 1 | 2 | 3 = 0
-    if (minutesWithoutWater >= 100) {
+    if (minutesWithoutWater >= 120) {
       targetLevel = 3
-    } else if (minutesWithoutWater >= 80) {
+    } else if (minutesWithoutWater >= 90) {
       targetLevel = 2
     } else if (minutesWithoutWater >= 60) {
       targetLevel = 1
@@ -288,7 +309,7 @@ const processHydrationReminders = async () => {
       continue
     }
 
-    const body = pickMessage(targetLevel)
+    const body = hydrationReminderBody(candidate.userName, targetLevel)
     const icon = '/notification-water.svg'
     const url = '/water'
 
@@ -296,11 +317,18 @@ const processHydrationReminders = async () => {
       tokens,
       notification: { title: 'Bora beber água?', body },
       data: { type: 'water_reminder', level: String(targetLevel), icon, url, title: 'Bora beber água?', body },
+      android: {
+        priority: 'high',
+        notification: {
+          vibrateTimingsMillis: ANDROID_VIBRATE
+        }
+      },
       webpush: {
         notification: {
           title: 'Bora beber água?',
           body,
-          icon
+          icon,
+          vibrate: WEB_VIBRATE
         }
       }
     })

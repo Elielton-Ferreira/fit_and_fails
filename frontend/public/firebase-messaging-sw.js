@@ -22,10 +22,12 @@ messaging.onBackgroundMessage((payload) => {
   const title = data.title || 'Fit & Fails'
   const body = data.body || 'Nova atualização'
   const icon = data.icon || (data.type === 'water_reminder' ? '/notification-water.svg' : undefined)
+  const vibrate = data.type === 'water_reminder' ? [200, 100, 200, 100, 200] : [200, 100, 200]
   const options = {
     body,
     data,
     icon,
+    vibrate,
     tag: data.postId ? `post-${data.postId}` : undefined,
     renotify: false
   }
