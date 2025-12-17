@@ -14,7 +14,7 @@ services:
       - '5432:5432'
 
   backend:
-    image: docker.io/elieltondevopsengineer/fit_and_fails-backend:v10
+    image: docker.io/elieltondevopsengineer/fit_and_fails-backend:v13
     restart: unless-stopped
     depends_on:
       - db
@@ -29,7 +29,7 @@ services:
       - '4000:4000'
 
   frontend:
-    image: docker.io/elieltondevopsengineer/fit_and_fails-frontend:v15
+    image: docker.io/elieltondevopsengineer/fit_and_fails-frontend:v18
     restart: unless-stopped
     depends_on:
       - backend
@@ -40,7 +40,7 @@ services:
       - '80:80'
 
   notification:
-    build: ./notification
+    image: docker.io/elieltondevopsengineer/fit_and_fails-notification:v2
     restart: unless-stopped
     depends_on:
       - db
