@@ -27,9 +27,7 @@ messaging.onBackgroundMessage((payload) => {
     body,
     data,
     icon,
-    vibrate,
-    tag: data.postId ? `post-${data.postId}` : undefined,
-    renotify: false
+    vibrate
   }
   self.registration.showNotification(title, options)
 })

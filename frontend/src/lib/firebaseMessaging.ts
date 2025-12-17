@@ -87,9 +87,7 @@ export const setupForegroundNotifications = async () => {
         body,
         data,
         icon,
-        vibrate,
-        tag: data.postId ? `post-${data.postId}` : undefined,
-        renotify: false
+        vibrate
       })
 
       notif.onclick = () => {
