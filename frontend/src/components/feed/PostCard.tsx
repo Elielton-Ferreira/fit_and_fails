@@ -172,7 +172,7 @@ const PostCard = ({
 
       <div className="px-5 py-4">
         {post.comments.items.map((item) => (
-          <div key={item.id} className="mb-3 flex items-start justify-between gap-3">
+          <div key={item.id} id={`comment-${item.id}`} className="mb-3 flex items-start justify-between gap-3">
             <div className="flex-1">
               <span className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.user.name}</span>{' '}
               <span className={`text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{item.text}</span>

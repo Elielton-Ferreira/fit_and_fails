@@ -205,7 +205,7 @@ const handleCommentCreated = async (commentId: string) => {
 
   const commentSnippet = truncate(summary.commentText, 90)
   const body = `${summary.commenterName}: ${commentSnippet}`
-  const url = `/dashboard#post-${summary.postId}`
+  const url = `/dashboard#comment-${summary.commentId}`
   const icon = `/api/users/${summary.commenterId}/avatar`
 
   const result = await sendPush({
