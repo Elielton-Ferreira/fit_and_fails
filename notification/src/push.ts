@@ -6,7 +6,7 @@ import { logError, logInfo } from './logger.js'
 
 type PushPayload = {
   tokens: string[]
-  notification: { title: string; body: string }
+  notification?: { title: string; body: string }
   data?: Record<string, string>
   android?: AndroidConfig
   apns?: ApnsConfig

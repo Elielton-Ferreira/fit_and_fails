@@ -19,6 +19,23 @@ const tryParseDataUrl = (value: string) => {
   return { mime: match[1], base64: match[2] }
 }
 
+const escapeXmlAttribute = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const makeCircleAvatarSvg = (imageHref: string) => {
+  const safeHref = escapeXmlAttribute(imageHref)
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Avatar">
+  <defs>
+    <clipPath id="clip">
+      <circle cx="64" cy="64" r="64" />
+    </clipPath>
+  </defs>
+  <rect width="128" height="128" rx="64" fill="transparent"/>
+  <image href="${safeHref}" width="128" height="128" clip-path="url(#clip)" preserveAspectRatio="xMidYMid slice" />
+</svg>`
+}
+
 export async function me(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
@@ -75,6 +92,27 @@ export async function avatar(req: Request, res: Response) {
 
     // Qualquer outra string: tenta usar como path/URL
     return res.redirect(302, avatarUrl)
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message })
+  }
+}
+
+export async function avatarCircle(req: Request, res: Response) {
+  try {
+    const { userId } = req.params as { userId?: string }
+    if (!userId) return res.status(400).json({ error: 'userId é obrigatório' })
+
+    const user = await userRepository.findById(userId)
+    const avatarUrl = user?.avatarUrl
+
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    res.setHeader('Content-Type', 'image/svg+xml')
+
+    if (!avatarUrl) {
+      return res.send(makeInitialsSvg(user?.name))
+    }
+
+    return res.send(makeCircleAvatarSvg(avatarUrl))
   } catch (err: any) {
     return res.status(500).json({ error: err.message })
   }

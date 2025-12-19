@@ -67,6 +67,11 @@ export type HydrationCandidate = {
   lastReminderLevel: number
 }
 
+export type DeviceToken = {
+  token: string
+  platform: Platform
+}
+
 const pool = new Pool({ connectionString: config.databaseUrl })
 
 export const ensureSchema = async () => {
@@ -246,6 +251,16 @@ export const deleteTokens = async (tokens: string[]) => {
 }
 
 export const getTokensForBroadcast = async (excludeUserId?: string) => {
+  const devices = await getDevicesForBroadcast(excludeUserId)
+  return devices.map((d) => d.token)
+}
+
+export const getTokensForUser = async (userId: string) => {
+  const devices = await getDevicesForUser(userId)
+  return devices.map((d) => d.token)
+}
+
+export const getDevicesForBroadcast = async (excludeUserId?: string): Promise<DeviceToken[]> => {
   const params: unknown[] = []
   let where = ''
 
@@ -254,7 +269,7 @@ export const getTokensForBroadcast = async (excludeUserId?: string) => {
     where = 'WHERE user_id <> $1'
   }
 
-  const { rows } = await pool.query<{ token: string }>(
+  const { rows } = await pool.query<DeviceToken>(
     `
     WITH base AS (
       SELECT user_id, platform, token, device_id, last_seen_at, updated_at, created_at
@@ -262,31 +277,32 @@ export const getTokensForBroadcast = async (excludeUserId?: string) => {
       ${where}
     ),
     modern AS (
-      SELECT token FROM base WHERE device_id IS NOT NULL
+      SELECT token, platform FROM base WHERE device_id IS NOT NULL
     ),
     legacy AS (
-      SELECT DISTINCT ON (user_id, platform) token
+      SELECT DISTINCT ON (user_id, platform) token, platform
       FROM base
       WHERE device_id IS NULL
       ORDER BY user_id, platform, last_seen_at DESC, updated_at DESC, created_at DESC
     )
-    SELECT token FROM modern
+    SELECT token, platform FROM modern
     UNION ALL
-    SELECT token FROM legacy
+    SELECT token, platform FROM legacy
     `,
     params
   )
-  return rows.map((r) => r.token)
+
+  return rows
 }
 
-export const getTokensForUser = async (userId: string) => {
-  const { rows } = await pool.query<{ token: string }>(
+export const getDevicesForUser = async (userId: string): Promise<DeviceToken[]> => {
+  const { rows } = await pool.query<DeviceToken>(
     `
-    SELECT token FROM notification_devices
+    SELECT token, platform FROM notification_devices
     WHERE user_id = $1 AND device_id IS NOT NULL
     UNION ALL
-    SELECT token FROM (
-      SELECT DISTINCT ON (platform) token
+    SELECT token, platform FROM (
+      SELECT DISTINCT ON (platform) token, platform
       FROM notification_devices
       WHERE user_id = $1 AND device_id IS NULL
       ORDER BY platform, last_seen_at DESC, updated_at DESC, created_at DESC
@@ -294,7 +310,8 @@ export const getTokensForUser = async (userId: string) => {
     `,
     [userId]
   )
-  return rows.map((r) => r.token)
+
+  return rows
 }
 
 export const fetchPostSummary = async (postId: string): Promise<PostSummary | null> => {

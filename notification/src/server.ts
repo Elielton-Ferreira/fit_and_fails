@@ -9,8 +9,8 @@ import {
   fetchLikeSummary,
   fetchPostSummary,
   getHydrationReminderCandidates,
-  getTokensForBroadcast,
-  getTokensForUser,
+  getDevicesForBroadcast,
+  getDevicesForUser,
   saveHydrationState,
   startDbListeners,
   upsertDevice
@@ -40,8 +40,23 @@ const postTypeLabels: Record<string, string> = {
   books: 'compartilhou leitura diária'
 }
 
-const WEB_VIBRATE = [200, 100, 200]
 const ANDROID_VIBRATE = [0, 200, 100, 200]
+
+const splitTokens = (devices: Array<{ token: string; platform: 'android' | 'ios' | 'web' }>) => {
+  const webTokens: string[] = []
+  const otherTokens: string[] = []
+  for (const device of devices) {
+    if (device.platform === 'web') webTokens.push(device.token)
+    else otherTokens.push(device.token)
+  }
+  return { webTokens, otherTokens }
+}
+
+const buildWebpushConfig = () => ({
+  headers: {
+    Urgency: 'high'
+  }
+})
 
 const hydrationReminderBody = (userName: string, level: 1 | 2 | 3) => {
   const name = userName?.trim() || 'Ei'
@@ -73,39 +88,49 @@ app.post('/test', async (req, res) => {
   const { userId } = req.body as { userId?: string }
   if (!userId) return res.status(400).json({ error: 'userId é obrigatório' })
 
-  const tokens = await getTokensForUser(userId)
-  if (!tokens.length) return res.status(404).json({ error: 'Nenhum dispositivo para este usuário' })
+  const devices = await getDevicesForUser(userId)
+  const { webTokens, otherTokens } = splitTokens(devices)
+  if (!webTokens.length && !otherTokens.length) return res.status(404).json({ error: 'Nenhum dispositivo para este usuário' })
 
-  const result = await sendPush({
-    tokens,
-    notification: { title: 'Teste de notificação', body: 'Push enviado pelo serviço de notificações' },
-    data: { type: 'test' },
-    android: {
-      priority: 'high',
-      notification: {
-        vibrateTimingsMillis: ANDROID_VIBRATE
-      }
-    },
-    webpush: {
-      notification: {
-        title: 'Teste de notificação',
-        body: 'Push enviado pelo serviço de notificações',
-        vibrate: WEB_VIBRATE
-      }
-    }
-  })
+  const data = { type: 'test', title: 'Teste de notificação', body: 'Push enviado pelo serviço de notificações' }
 
-  if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
+  const results = await Promise.all([
+    webTokens.length
+      ? sendPush({
+          tokens: webTokens,
+          data,
+          webpush: buildWebpushConfig()
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] }),
+    otherTokens.length
+      ? sendPush({
+          tokens: otherTokens,
+          notification: { title: 'Teste de notificação', body: 'Push enviado pelo serviço de notificações' },
+          data,
+          android: {
+            priority: 'high',
+            notification: {
+              vibrateTimingsMillis: ANDROID_VIBRATE
+            }
+          }
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] })
+  ])
 
-  res.json({ ok: true, sent: result.success, invalidTokens: result.invalidTokens })
+  const invalidTokens = results.flatMap((r) => r.invalidTokens)
+  const sent = results.reduce((acc, r) => acc + r.success, 0)
+  if (invalidTokens.length) await deleteTokens(invalidTokens)
+
+  res.json({ ok: true, sent, invalidTokens })
 })
 
 const handlePostCreated = async (postId: string) => {
   const summary = await fetchPostSummary(postId)
   if (!summary) return
 
-  const tokens = await getTokensForBroadcast(summary.authorId)
-  if (!tokens.length) return
+  const devices = await getDevicesForBroadcast(summary.authorId)
+  const { webTokens, otherTokens } = splitTokens(devices)
+  if (!webTokens.length && !otherTokens.length) return
 
   if (!config.pushEnabled || !config.firebase) {
     logInfo('Push não configurado; evento post_created recebido')
@@ -114,38 +139,46 @@ const handlePostCreated = async (postId: string) => {
 
   const body = `${summary.authorName} ${postTypeLabels[summary.type] ?? 'compartilhou uma nova postagem'}`
   const url = `/dashboard#post-${summary.postId}`
-  const icon = `/api/users/${summary.authorId}/avatar`
+  const icon = `/api/users/${summary.authorId}/avatar-circle`
+  const title = 'Nova postagem no Fit & Fails'
+  const data = {
+    type: 'post_created',
+    postId: summary.postId,
+    authorId: summary.authorId,
+    url,
+    icon,
+    title,
+    body
+  }
 
-  const result = await sendPush({
-    tokens,
-    notification: { title: 'Nova postagem no Fit & Fails', body },
-    data: {
-      type: 'post_created',
-      postId: summary.postId,
-      authorId: summary.authorId,
-      url,
-      icon,
-      title: 'Nova postagem no Fit & Fails',
-      body
-    },
-    android: {
-      priority: 'high',
-      notification: {
-        vibrateTimingsMillis: ANDROID_VIBRATE
-      }
-    },
-    webpush: {
-      notification: {
-        title: 'Nova postagem no Fit & Fails',
-        body,
-        icon,
-        vibrate: WEB_VIBRATE
-      }
-    }
-  })
+  const results = await Promise.all([
+    webTokens.length
+      ? sendPush({
+          tokens: webTokens,
+          data,
+          webpush: buildWebpushConfig()
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] }),
+    otherTokens.length
+      ? sendPush({
+          tokens: otherTokens,
+          notification: { title, body },
+          data,
+          android: {
+            priority: 'high',
+            notification: {
+              vibrateTimingsMillis: ANDROID_VIBRATE
+            }
+          }
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] })
+  ])
 
-  if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
-  logInfo(`post_created => sent ${result.success} pushes, ${result.failure} falhas`)
+  const invalidTokens = results.flatMap((r) => r.invalidTokens)
+  const sent = results.reduce((acc, r) => acc + r.success, 0)
+  const failures = results.reduce((acc, r) => acc + r.failure, 0)
+  if (invalidTokens.length) await deleteTokens(invalidTokens)
+  logInfo(`post_created => sent ${sent} pushes, ${failures} falhas`)
 }
 
 const handleLikeCreated = async (likeId: string) => {
@@ -153,8 +186,9 @@ const handleLikeCreated = async (likeId: string) => {
   if (!summary) return
   if (summary.postOwnerId === summary.likerId) return
 
-  const tokens = await getTokensForUser(summary.postOwnerId)
-  if (!tokens.length) return
+  const devices = await getDevicesForUser(summary.postOwnerId)
+  const { webTokens, otherTokens } = splitTokens(devices)
+  if (!webTokens.length && !otherTokens.length) return
 
   if (!config.pushEnabled || !config.firebase) {
     logInfo('Push não configurado; evento like_created recebido')
@@ -163,40 +197,48 @@ const handleLikeCreated = async (likeId: string) => {
 
   const body = `${summary.likerName} curtiu seu post`
   const url = `/dashboard#post-${summary.postId}`
-  const icon = `/api/users/${summary.likerId}/avatar`
+  const icon = `/api/users/${summary.likerId}/avatar-circle`
+  const title = 'Novo like no seu post'
+  const data = {
+    type: 'like_created',
+    postId: summary.postId,
+    likerId: summary.likerId,
+    postOwnerId: summary.postOwnerId,
+    postType: summary.postType,
+    url,
+    icon,
+    title,
+    body
+  }
 
-  const result = await sendPush({
-    tokens,
-    notification: { title: 'Novo like no seu post', body },
-    data: {
-      type: 'like_created',
-      postId: summary.postId,
-      likerId: summary.likerId,
-      postOwnerId: summary.postOwnerId,
-      postType: summary.postType,
-      url,
-      icon,
-      title: 'Novo like no seu post',
-      body
-    },
-    android: {
-      priority: 'high',
-      notification: {
-        vibrateTimingsMillis: ANDROID_VIBRATE
-      }
-    },
-    webpush: {
-      notification: {
-        title: 'Novo like no seu post',
-        body,
-        icon,
-        vibrate: WEB_VIBRATE
-      }
-    }
-  })
+  const results = await Promise.all([
+    webTokens.length
+      ? sendPush({
+          tokens: webTokens,
+          data,
+          webpush: buildWebpushConfig()
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] }),
+    otherTokens.length
+      ? sendPush({
+          tokens: otherTokens,
+          notification: { title, body },
+          data,
+          android: {
+            priority: 'high',
+            notification: {
+              vibrateTimingsMillis: ANDROID_VIBRATE
+            }
+          }
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] })
+  ])
 
-  if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
-  logInfo(`like_created => sent ${result.success} pushes, ${result.failure} falhas`)
+  const invalidTokens = results.flatMap((r) => r.invalidTokens)
+  const sent = results.reduce((acc, r) => acc + r.success, 0)
+  const failures = results.reduce((acc, r) => acc + r.failure, 0)
+  if (invalidTokens.length) await deleteTokens(invalidTokens)
+  logInfo(`like_created => sent ${sent} pushes, ${failures} falhas`)
 }
 
 const truncate = (value: string, max: number) => {
@@ -210,8 +252,9 @@ const handleCommentCreated = async (commentId: string) => {
   if (!summary) return
   if (summary.postOwnerId === summary.commenterId) return
 
-  const tokens = await getTokensForUser(summary.postOwnerId)
-  if (!tokens.length) return
+  const devices = await getDevicesForUser(summary.postOwnerId)
+  const { webTokens, otherTokens } = splitTokens(devices)
+  if (!webTokens.length && !otherTokens.length) return
 
   if (!config.pushEnabled || !config.firebase) {
     logInfo('Push não configurado; evento comment_created recebido')
@@ -221,41 +264,49 @@ const handleCommentCreated = async (commentId: string) => {
   const commentSnippet = truncate(summary.commentText, 90)
   const body = `${summary.commenterName}: ${commentSnippet}`
   const url = `/dashboard#comment-${summary.commentId}`
-  const icon = `/api/users/${summary.commenterId}/avatar`
+  const icon = `/api/users/${summary.commenterId}/avatar-circle`
+  const title = 'Novo comentário no seu post'
+  const data = {
+    type: 'comment_created',
+    postId: summary.postId,
+    commentId: summary.commentId,
+    commenterId: summary.commenterId,
+    postOwnerId: summary.postOwnerId,
+    postType: summary.postType,
+    url,
+    icon,
+    title,
+    body
+  }
 
-  const result = await sendPush({
-    tokens,
-    notification: { title: 'Novo comentário no seu post', body },
-    data: {
-      type: 'comment_created',
-      postId: summary.postId,
-      commentId: summary.commentId,
-      commenterId: summary.commenterId,
-      postOwnerId: summary.postOwnerId,
-      postType: summary.postType,
-      url,
-      icon,
-      title: 'Novo comentário no seu post',
-      body
-    },
-    android: {
-      priority: 'high',
-      notification: {
-        vibrateTimingsMillis: ANDROID_VIBRATE
-      }
-    },
-    webpush: {
-      notification: {
-        title: 'Novo comentário no seu post',
-        body,
-        icon,
-        vibrate: WEB_VIBRATE
-      }
-    }
-  })
+  const results = await Promise.all([
+    webTokens.length
+      ? sendPush({
+          tokens: webTokens,
+          data,
+          webpush: buildWebpushConfig()
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] }),
+    otherTokens.length
+      ? sendPush({
+          tokens: otherTokens,
+          notification: { title, body },
+          data,
+          android: {
+            priority: 'high',
+            notification: {
+              vibrateTimingsMillis: ANDROID_VIBRATE
+            }
+          }
+        })
+      : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] })
+  ])
 
-  if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
-  logInfo(`comment_created => sent ${result.success} pushes, ${result.failure} falhas`)
+  const invalidTokens = results.flatMap((r) => r.invalidTokens)
+  const sent = results.reduce((acc, r) => acc + r.success, 0)
+  const failures = results.reduce((acc, r) => acc + r.failure, 0)
+  if (invalidTokens.length) await deleteTokens(invalidTokens)
+  logInfo(`comment_created => sent ${sent} pushes, ${failures} falhas`)
 }
 
 const processHydrationReminders = async () => {
@@ -273,8 +324,9 @@ const processHydrationReminders = async () => {
   const candidates = await getHydrationReminderCandidates()
 
   for (const candidate of candidates) {
-    const tokens = await getTokensForUser(candidate.userId)
-    if (!tokens.length) continue
+    const devices = await getDevicesForUser(candidate.userId)
+    const { webTokens, otherTokens } = splitTokens(devices)
+    if (!webTokens.length && !otherTokens.length) continue
 
     const hasNewDrink =
       candidate.lastDrinkAt &&
@@ -313,34 +365,43 @@ const processHydrationReminders = async () => {
     const body = hydrationReminderBody(candidate.userName, targetLevel)
     const icon = '/notification-water.svg'
     const url = '/water'
+    const title = 'Bora beber água?'
+    const data = { type: 'water_reminder', level: String(targetLevel), icon, url, title, body }
 
-    const result = await sendPush({
-      tokens,
-      notification: { title: 'Bora beber água?', body },
-      data: { type: 'water_reminder', level: String(targetLevel), icon, url, title: 'Bora beber água?', body },
-      android: {
-        priority: 'high',
-        notification: {
-          vibrateTimingsMillis: ANDROID_VIBRATE
-        }
-      },
-      webpush: {
-        notification: {
-          title: 'Bora beber água?',
-          body,
-          icon,
-          vibrate: WEB_VIBRATE
-        }
-      }
-    })
+    const results = await Promise.all([
+      webTokens.length
+        ? sendPush({
+            tokens: webTokens,
+            data,
+            webpush: buildWebpushConfig()
+          })
+        : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] }),
+      otherTokens.length
+        ? sendPush({
+            tokens: otherTokens,
+            notification: { title, body },
+            data,
+            android: {
+              priority: 'high',
+              notification: {
+                vibrateTimingsMillis: ANDROID_VIBRATE
+              }
+            }
+          })
+        : Promise.resolve({ success: 0, failure: 0, invalidTokens: [] })
+    ])
 
-    if (result.invalidTokens.length) await deleteTokens(result.invalidTokens)
+    const invalidTokens = results.flatMap((r) => r.invalidTokens)
+    const sent = results.reduce((acc, r) => acc + r.success, 0)
+    const failures = results.reduce((acc, r) => acc + r.failure, 0)
+
+    if (invalidTokens.length) await deleteTokens(invalidTokens)
     await saveHydrationState({
       userId: candidate.userId,
       lastDrinkAt: candidate.lastDrinkAt,
       lastReminderLevel: targetLevel
     })
-    logInfo(`hydration => sent ${result.success} pushes (level ${targetLevel}) for user ${candidate.userId}`)
+    logInfo(`hydration => sent ${sent} pushes (level ${targetLevel}) for user ${candidate.userId} (${failures} falhas)`)
   }
 }
 
