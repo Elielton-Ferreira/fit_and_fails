@@ -168,3 +168,45 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(63, 124, 255, 1), rgba(127, 180, 255, 1));
 }
+
+#screen {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+#screen .grid {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  min-width: 0;
+}
+
+#screen .sm\:grid-cols-2 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+#screen .lg\:grid-cols-2 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+#screen .flex {
+  min-width: 0;
+}
+
+#screen select,
+#screen input,
+#screen textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+#screen .space-y-2 > div.flex {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#screen .space-y-2 > div.flex > div:first-child {
+  min-width: 0;
+}
+
+#screen .space-y-2 > div.flex > div:first-child p {
+  word-break: break-word;
+}
