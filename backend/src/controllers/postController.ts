@@ -2,6 +2,21 @@ import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import postService from '../services/postService'
 
+const getCookie = (cookieHeader: string | undefined, name: string) => {
+  if (!cookieHeader) return null
+  const parts = cookieHeader.split(';')
+  for (const part of parts) {
+    const [key, ...rest] = part.trim().split('=')
+    if (!key || rest.length === 0) continue
+    if (key !== name) continue
+    const value = rest.join('=')
+    if (!value) return null
+    const decoded = decodeURIComponent(value)
+    return decoded.startsWith('"') && decoded.endsWith('"') ? decoded.slice(1, -1) : decoded
+  }
+  return null
+}
+
 export async function getAll(req: Request, res: Response) {
   try {
     // leitura pública, mas se houver token aproveitamos para sinalizar likedByViewer
@@ -18,6 +33,19 @@ export async function getAll(req: Request, res: Response) {
         }
       }
     }
+
+    if (!viewerId) {
+      const cookieToken = getCookie(req.headers.cookie, 'token')
+      if (cookieToken) {
+        try {
+          const decoded = jwt.verify(cookieToken, process.env.JWT_SECRET || 'supersecret_jwt_change_me') as any
+          viewerId = decoded?.userId
+        } catch {
+          // cookie inválido? apenas ignora, segue como público
+        }
+      }
+    }
+
     const posts = await postService.getAll({
       type: req.query.type as string,
       day: req.query.day as string,
