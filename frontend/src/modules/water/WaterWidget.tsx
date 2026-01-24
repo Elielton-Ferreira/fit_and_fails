@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toPng } from 'html-to-image'
 import api from '../../lib/api'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -17,6 +18,9 @@ const WaterWidget = () => {
   const [friendsHydration, setFriendsHydration] = useState<RankingEntry[]>([])
   const [friendsError, setFriendsError] = useState('')
   const [friendsLoading, setFriendsLoading] = useState(true)
+  const [shareFriendsLoading, setShareFriendsLoading] = useState(false)
+  const [shareFriendsError, setShareFriendsError] = useState('')
+  const friendsSectionRef = useRef<HTMLDivElement | null>(null)
   const { token } = useAuth()
 
   const fetchSnapshot = useCallback(async () => {
@@ -85,6 +89,33 @@ const WaterWidget = () => {
         return b.waterTotal - a.waterTotal
       })
   }, [friendsHydration])
+
+  const shareFriendsSnapshot = async () => {
+    if (!friendsSectionRef.current) return
+    try {
+      setShareFriendsError('')
+      setShareFriendsLoading(true)
+      const dataUrl = await toPng(friendsSectionRef.current, { cacheBust: true })
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], 'hidratacao-amigos.png', { type: blob.type })
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Hidratação Amigos',
+          text: 'Olha como a galera está hidratando hoje.',
+          files: [file]
+        })
+      } else {
+        const link = document.createElement('a')
+        link.href = dataUrl
+        link.download = 'hidratacao-amigos.png'
+        link.click()
+      }
+    } catch (err: any) {
+      setShareFriendsError(err?.message || 'Não foi possível compartilhar agora.')
+    } finally {
+      setShareFriendsLoading(false)
+    }
+  }
 
   if (!snapshot) {
     return (
@@ -156,58 +187,79 @@ const WaterWidget = () => {
 
       {feedback && <p className="mt-4 text-sm text-sky-200">{feedback}</p>}
 
-      <div className="mt-6 rounded-2xl border border-white/5 p-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+      <div className="mt-6">
+        <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1">
             <p className="text-sm font-semibold text-white">Hidratação Amigos</p>
             <p className="text-xs text-slate-400">Veja como a galera está hidratando hoje.</p>
           </div>
-          {friendsLoading && <p className="text-xs text-slate-400">Carregando...</p>}
-          {friendsError && <p className="text-xs text-rose-300">{friendsError}</p>}
+          <div className="flex flex-col items-start gap-1 sm:items-end">
+            <Button
+              type="button"
+              variant="ghost"
+              className="px-3 py-2 text-xs"
+              onClick={shareFriendsSnapshot}
+              disabled={friendsLoading || shareFriendsLoading}
+            >
+              {shareFriendsLoading ? 'Gerando imagem...' : 'Compartilhar bloco'}
+            </Button>
+            {shareFriendsError && <p className="text-[11px] text-rose-300">{shareFriendsError}</p>}
+          </div>
         </div>
 
-        {!friendsLoading && !friendsError && (
-          <>
-            {friendsWithProgress.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-500">Convide amigos para acompanhar a hidratação em tempo real.</p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {friendsWithProgress.map((friend) => (
-                  <li key={friend.userId} className="rounded-2xl border border-white/5 bg-white/5 px-3 py-3">
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <div className="flex items-center gap-3">
-                        {friend.avatarUrl ? (
-                          <img
-                            src={friend.avatarUrl}
-                            alt={friend.name}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
-                            {friend.name.slice(0, 1).toUpperCase()}
+        <div ref={friendsSectionRef} className="rounded-2xl border border-white/5 p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">Hidratação Amigos</p>
+              <p className="text-xs text-slate-400">Veja como a galera está hidratando hoje.</p>
+            </div>
+            {friendsLoading && <p className="text-xs text-slate-400">Carregando...</p>}
+            {friendsError && <p className="text-xs text-rose-300">{friendsError}</p>}
+          </div>
+
+          {!friendsLoading && !friendsError && (
+            <>
+              {friendsWithProgress.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">Convide amigos para acompanhar a hidratação em tempo real.</p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {friendsWithProgress.map((friend) => (
+                    <li key={friend.userId} className="rounded-2xl border border-white/5 bg-white/5 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-3">
+                          {friend.avatarUrl ? (
+                            <img
+                              src={friend.avatarUrl}
+                              alt={friend.name}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
+                              {friend.name.slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-white">{friend.name}</p>
+                            <p className="text-xs text-slate-400">
+                              {friend.waterTotal} / {friend.waterGoal} ml
+                            </p>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-white">{friend.name}</p>
-                          <p className="text-xs text-slate-400">
-                            {friend.waterTotal} / {friend.waterGoal} ml
-                          </p>
                         </div>
+                        <span className={`text-sm font-semibold ${friend.waterMet ? 'text-emerald-300' : 'text-sky-300'}`}>{friend.percent}%</span>
                       </div>
-                      <span className={`text-sm font-semibold ${friend.waterMet ? 'text-emerald-300' : 'text-sky-300'}`}>{friend.percent}%</span>
-                    </div>
-                    <div className="mt-2 h-2 rounded-full bg-white/10">
-                      <div
-                        className={`h-2 rounded-full ${friend.waterMet ? 'bg-emerald-400' : 'bg-primary'}`}
-                        style={{ width: `${friend.percent}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
+                      <div className="mt-2 h-2 rounded-full bg-white/10">
+                        <div
+                          className={`h-2 rounded-full ${friend.waterMet ? 'bg-emerald-400' : 'bg-primary'}`}
+                          style={{ width: `${friend.percent}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-white/5 p-4">

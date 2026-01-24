@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 const IconFeed = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -9,7 +10,7 @@ const IconFeed = () => (
 )
 
 const IconCreate = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 5v14" />
     <path d="M5 12h14" />
   </svg>
@@ -60,37 +61,97 @@ const IconProfile = () => (
 
 const items = [
   { label: 'Feed', href: '/dashboard', icon: <IconFeed /> },
-  { label: 'Ranking', href: '/ranking', icon: <IconTrophy /> },
   { label: 'Água', href: '/water', icon: <IconWater /> },
-  { label: 'Livros', href: '/book', icon: <IconBook /> },
-  { label: 'Treino', href: '/exercise', icon: <IconDumbbell /> },
+  { label: 'Ranking', href: '/ranking', icon: <IconTrophy /> },
   { label: 'Perfil', href: '/profile', icon: <IconProfile /> }
 ]
 
 const BottomNav = () => {
+  const navigate = useNavigate()
+  const [showQuickActions, setShowQuickActions] = useState(false)
+
   const handleClick = (href: string) => {
     if (href === '/dashboard') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-white/10 bg-[rgba(7,9,18,0.92)] py-3 text-sm text-slate-200 backdrop-blur lg:hidden">
-      {items.map((item) => (
-        <NavLink
-          key={item.href}
-          to={item.href}
-          onClick={() => handleClick(item.href)}
-          className={({ isActive }) =>
-            [
-              'flex flex-col items-center gap-1 rounded-xl px-2 text-xs font-medium transition',
-              isActive ? 'text-white drop-shadow-[0_6px_22px_rgba(63,124,255,0.45)]' : 'text-slate-300 hover:text-white'
-            ].join(' ')
-          }
+    <>
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-white/10 bg-black/95 py-3 text-xs font-semibold text-slate-200 backdrop-blur lg:hidden">
+        {items.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            onClick={() => handleClick(item.href)}
+            className={({ isActive }) =>
+              [
+                'flex flex-col items-center gap-1 px-2 transition',
+                isActive ? 'text-white drop-shadow-[0_6px_22px_rgba(255,0,255,0.35)]' : 'text-slate-300 hover:text-white'
+              ].join(' ')
+            }
+          >
+            <span className="text-lg">{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          onClick={() => setShowQuickActions(true)}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg shadow-fuchsia-500/30"
+          aria-label="Novo"
         >
-          <span className="text-lg">{item.icon}</span>
-          {item.label}
-        </NavLink>
-      ))}
-    </nav>
+          <IconCreate />
+        </button>
+      </nav>
+
+      {showQuickActions && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 pb-24"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowQuickActions(false)}
+        >
+          <div
+            className="w-full max-w-xs overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f13] text-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Criar</div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowQuickActions(false)
+                navigate('/book')
+              }}
+              className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-sm hover:bg-white/5"
+            >
+              <span className="rounded-full bg-white/10 p-2">
+                <IconBook />
+              </span>
+              Ir para Livros
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowQuickActions(false)
+                navigate('/exercise')
+              }}
+              className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-sm hover:bg-white/5"
+            >
+              <span className="rounded-full bg-white/10 p-2">
+                <IconDumbbell />
+              </span>
+              Ir para Treinos
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowQuickActions(false)}
+              className="w-full border-t border-white/5 px-4 py-3 text-center text-sm text-slate-400 hover:text-white"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

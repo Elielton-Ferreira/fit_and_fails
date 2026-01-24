@@ -143,7 +143,7 @@ const Feed = () => {
   }
 
   return (
-    <section id="feed" className="mx-auto max-w-3xl space-y-6">
+    <section id="feed" className="mx-auto w-full max-w-[480px] space-y-5 px-3 pb-16 sm:px-0">
       <PostComposer onCreated={handleNewPost} onPublished={() => fetchPosts(undefined, 'replace')} />
       {error && <p className="text-sm text-rose-300">{error}</p>}
       {loading ? (

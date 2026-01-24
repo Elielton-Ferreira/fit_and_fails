@@ -329,8 +329,8 @@ const ExerciseWidget = () => {
           </div>
         </div>
         <div className="grid grid-cols-7 gap-2 text-center text-xs text-slate-400 mb-2">
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d) => (
-            <span key={d}>{d}</span>
+          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, idx) => (
+            <span key={`${d}-${idx}`}>{d}</span>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-2">
